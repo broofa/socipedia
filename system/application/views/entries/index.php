@@ -33,19 +33,19 @@ text-decoration: underline;
 
 <div class="sidebar">
   <p>Get this search as a &hellip;</p>
-  <a class="button" href="#">RSS Feed</a>
+  <a class="button" href="<?= $entries->url('rss', $q) ?>">RSS Feed</a>
   <a class="button" href="#">CSV File</a>
-  <a class="button" href="<?= $maplink ?>" target="_blank">Google Map</a>
+  <a class="button" href="<?= $entries->url('map', $q) ?>" target="_blank">Google Map</a>
 </div>
 
-<? $count = count($entries) ?>
+<? $count = count($entries->all) ?>
 <h2><?= $q ? "$count entries matching $q" : "All $count entries" ?></h2>
 <div id="index">
 <?
 $chars = array();
 
-foreach($entries as $entry) {
-  $char = strtoupper(substr($entry->getDisplayName(), 0,1));
+foreach($entries->all as $entry) {
+  $char = strtoupper(substr($entry->displayName, 0,1));
   $chars[] = $char;
 }
 sort($chars);
@@ -58,8 +58,8 @@ foreach($chars as $char) {
 <dl>
   <?
   $lastchar = "";
-  foreach($entries as $entry) {
-    $dn = $entry->getDisplayName();
+  foreach($entries->all as $entry) {
+    $dn = $entry->displayName;
     $char = strtoupper(substr($dn, 0,1));
     if ($char != $lastchar) {
       echo "<div class=\"section\"><a name=\"section_$char\">$char</a></div>";
@@ -75,7 +75,7 @@ foreach($chars as $char) {
       ?>
     </dt>
     <dd>
-      <?= $entry->getDescription(200) ?>
+      <?= $entry->descriptionSummary ?>
     </dd>
     <? cleer() ?>
   <? } ?>

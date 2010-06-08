@@ -12,11 +12,6 @@ function queryParams() {
   return $params;
 }
 
-function _hashlinks($matches) {
-  $s=$matches[0];
-  return "<a class=\"hashtag\" href=\"./?q=".hashquery($s)."\">".$s."</a>";
-}
-
 function cleer() {
   echo '<div class="cleer"></div>';
 }
@@ -28,9 +23,19 @@ function hashunquery($s) {
   return $s ? preg_replace('/^tag:/', '#', $s) : null;
 }
 
+function _hashlinks($matches) {
+  $s=$matches[0];
+  return "<a class=\"hashtag\" href=\"./?q=".hashquery($s)."\">".$s."</a>";
+}
 
 function hashlinks($s) {
-  return preg_replace_callback('/#([a-z]*)/', '_hashlinks', $s);
+  return preg_replace_callback('/#(\w*)/', '_hashlinks', $s);
+}
+
+function weblink($url, $text=null, $blank=false) {
+  if (!$text) $text = $url;
+  if (!preg_match('|^http|', $url)) $url = "http://$url";
+  return "<a href=\"$url\" rel=\"nofollow\"".($blank ? ' target="_blank"' : '').">".htmlify($text)."</a>";
 }
 
 function htmlify($s, $escape=true) {

@@ -1,6 +1,14 @@
 <?
 
 class Entry extends DataMapper {
+  static $BLACKLIST = array(
+    'updated' => true,
+    'created' => true,
+    'created_ip' => true,
+    'auth' => true,
+    'salt' => true
+  );
+
   function Entry() {
     parent::DataMapper();
 
@@ -17,6 +25,28 @@ class Entry extends DataMapper {
     return substr(hash_hmac('sha512', $password . $nonce, BARD_SITE_KEY), 0, 128);
   }
 
+  function __get($k) {
+    if ($k == 'displayName') {
+      $c = $this->company;
+      $n = $this->name;
+      if ($n && $c) return "$n, $c";
+      if ($n) return $n;
+      return $c ? $c : '- No name provided -';
+    } else if ($k == 'descriptionHtml') {
+      return hashlinks(htmlify(parent::__get('description')));
+    } else if ($k == 'descriptionSummary') {
+      return htmlify(substr_replace(parent::__get('description'), ' ...', 140), false);
+    } else if ($k == 'rssDate') {
+      // TODO: Is there a better way to handle the timezone?  Mysql times are 
+      // GMT and have to be parsed as such.
+      $oldtz =date_default_timezone_get();
+      date_default_timezone_set('GMT');
+      return date('D, d M Y H:i:s T', strtotime($this->updated));
+      date_default_timezone_set($oldtz);
+    }
+    return parent::__get($k);
+  }
+
   function __set($k, $v) {
     if ($k == 'address') {
       $this->geocode($v);
@@ -29,13 +59,78 @@ class Entry extends DataMapper {
     parent::__set($k, $v);
   }
 
+  function delete() {
+    $activity = new Activity($this->id);
+    $name = $this->displayName;
+    $activity->summary = "Deleted \"$name\"";
+    $activity->save();
+
+    parent::delete();
+  }
+
+  function save() {
+    $activity = new Activity($this->id);
+    $stored = get_object_vars($this->stored);
+    $isNew = !$this->id;
+
+    parent::save();
+
+    $details = array();
+    $name = $this->displayName;
+    if ($isNew) {
+      $activity->entry_id = $this->id;
+      $activity->summary = "Created \"$name\"";
+      foreach ($stored as $key => $was) {
+        if (isset(self::$BLACKLIST[$key]) || !$this->$key) continue;
+        $now = $this->$key;
+        $details[] = "$key: $now"; 
+      }
+    } else {
+      $activity->summary = "Updated \"$name\"";
+      foreach ($stored as $key => $was) {
+        if (isset(self::$BLACKLIST[$key])) continue;
+        $now = $this->$key;
+        if ($was != $now) {
+          $details[] = "$key was: $was"; 
+          $details[] = "$key now: $now"; 
+        }
+      }
+    }
+    $activity->details = implode($details, "\n");
+    $activity->save();
+  }
+
+  function url($type=null, $option='') {
+    switch ($type) {
+    case 'map':
+      return "http://maps.google.com/maps?q=".
+        urlencode($this->url('kml')."&ts=".time());
+    case 'kml':
+      return $this->url()."?q=$option&format=kml";
+    case 'rss':
+      return $this->url()."?q=$option&format=rss";
+
+    case 'show':
+      return $this->url().'/'.$this->id;
+    case 'edit':
+      return $this->url().'/edit/'.$this->id.($option ? "#$option" : '');
+    case 'delete':
+      return $this->url().'/delete/'.$this->id;
+    case 'new':
+      return $this->url().'/new/'.$this->id;
+    case 'create':
+      return $this->url().'/create/'.$this->id;
+    }
+    return site_url('/entries');
+  }
+
   public function isAuthorized($passwd = null) {
     // No auth set == no password required
     if (!$this->auth) return true;
 
     // Pull password from POST field?
-    if (!$passwd && isset($_POST['password'])) {
-      $passwd = $_POST['password'];
+    if (!$passwd && isset($_POST['auth'])) {
+      $passwd = $_POST['auth'];
     }
 
     // Compute auth token
@@ -44,14 +139,6 @@ class Entry extends DataMapper {
 
     return $passwd == $this->auth || $hash == $this->auth ||
       $passwd == BARD_MASTER_HASH || $mhash == BARD_MASTER_HASH ;
-  }
-
-  public function getDisplayName() {
-    $c = $this->company;
-    $n = $this->name;
-    if ($n && $c) return "$n, $c";
-    if ($n) return $n;
-    return $c ? $c : '(unnamed)';
   }
 
   public function imageURL() {
@@ -68,14 +155,6 @@ class Entry extends DataMapper {
 
   public function thumbPath() {
     return BARD_UPLOAD_DIR . "/". $this->id . '_thumb.jpg';
-  }
-
-  public function getDescription($max=0) {
-    $d = $this->description;
-    if ($max && strlen($d) > $max) {
-      return htmlify(substr_replace($d, ' ...', $max), false);
-    }
-    return $d = hashlinks(htmlify($d));
   }
 
   public function geocode($address) {
@@ -142,8 +221,6 @@ class Entry extends DataMapper {
       }
       $this->has_image = false;
     }
-
-    $this->save();
   }
 }
 

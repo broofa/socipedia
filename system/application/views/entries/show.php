@@ -53,27 +53,28 @@ if (!$entry) {
   </style>
 
   <div class="sidebar">
-    <?= anchor('/entries/edit/'.$entry->id, 'Edit this entry', 'class="button"') ?>
+    <?= anchor($entry->url('edit'), 'Edit this entry', 'class="button"') ?>
   </div>
+
   <? if ($entry->has_image) { ?>
     <img class="avatar large" src="<?= $entry->imageURL() ?>" />
   <? } ?>
 
-  <h2><?= $entry->getDisplayName() ?></h2>
+  <h2><?= $entry->displayName ?></h2>
 
   <div class="description">
 
-<?= $entry->getDescription() ?>
+<?= $entry->descriptionHtml ?>
 </div>
 
   <dl class="contact_info">
     <? if ($entry->email) { ?>
       <dt class="label">email</dt>
-      <dd class="email"><a href="mailto:<?= htmlify($entry->email) ?>"><?= htmlify($entry->email) ?></a></dd>
+      <dd class="email"><?= auto_link($entry->email, 'email', TRUE) ?></dd>
     <? } ?>
     <? if ($entry->url) { ?>
       <dt class="label">www</dt>
-      <dd class="url"><a rel="nofollow" target="_blank" href="<?= htmlify($entry->url) ?>"><?= htmlify($entry->url) ?></a></dd>
+      <dd class="url"><?= weblink($entry->url, null, TRUE) ?></dd>
     <? } ?>
     <? if ($entry->phone) { ?>
       <dt class="label">phone</dt>

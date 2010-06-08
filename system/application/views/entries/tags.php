@@ -9,8 +9,10 @@ $count_max = max(array_values($tags));
 
 $spread = min(1, $count_max - $count_min);
 $step = ($font_max - $font_min) / ($spread);
-
-foreach ($tags as $tag => $count) {
+$tag_names = array_keys($tags);
+sort($tag_names);
+foreach ($tag_names as $tag) {
+  $count = $tags[$tag];
   $size = round($font_min + (($count - $count_min) * $step));
   $url = '/entries/?q='.hashquery($tag);
 

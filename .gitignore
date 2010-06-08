@@ -1,6 +1,9 @@
 # Config files contain sensitive data - make sure they don't get checked in
 app_config.php
 
+# Ignore uploads content
+static/uploads
+
 # Vim swap files
 *.swo
 *.swp

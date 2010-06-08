@@ -1,11 +1,11 @@
 <?= '<?' ?>xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://earth.google.com/kml/2.1">
   <Document>
-  <? foreach ($entries as $entry) { ?>
+  <? foreach ($entries->all as $entry) { ?>
     <Placemark>
-      <name><?= htmlify($entry->getDisplayName(), false) ?></name>
+      <name><?= htmlify($entry->displayName, false) ?></name>
       <description><![CDATA[
-        <?= $entry->getDescription(80) ?>
+        <?= $entry->descriptionSummary ?>
         <br/>
         <?= anchor('/entries/'.$entry->id, 'Click for details') ?>
       ]]></description>

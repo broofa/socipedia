@@ -43,11 +43,23 @@ class Entries extends Controller {
     return true;
   }
 
+  function index_rss($entries) {
+    //header('Content-type:text/plain');
+    header('Content-type:application/rss+xml');
+    $entries->order_by('updated desc');
+    $entries->limit(10);
+    $entries = $entries->get();
+    $this->load->view('entries/index_rss', array(
+      'entries' => $entries
+      ));
+  }
+
   function index_kml($entries) {
     //header('Content-type:text/plain');
     header('Content-type:text/plain');
     $entries->where('geocode !=', '');
-    $entries = $entries->get()->all;
+    $entries->order_by('_sort');
+    $entries = $entries->get();
 
     $this->load->view('entries/index_kml', array(
       'entries' => $entries
@@ -64,7 +76,6 @@ class Entries extends Controller {
 
     $entries = new Entry();
     $entries->select("*, CONCAT(name,company) as _sort", false);
-    $entries->order_by('_sort');
 
     if ($unq) {
       $entries->like('company', $unq);
@@ -72,11 +83,14 @@ class Entries extends Controller {
       $entries->or_like('description', $unq);
     }
 
-    if ($format == 'kml') {
+    if ($format == 'rss') {
+      return $this->index_rss($entries);
+    } else if ($format == 'kml') {
       return $this->index_kml($entries);
     }
 
-    $entries = $entries->get()->all;
+    $entries->order_by('_sort');
+    $entries = $entries->get();
     $maplink = "http://maps.google.com/maps?q=".
       urlencode(site_url("/entries?format=kml&q=$q&ts=".time()));
     $this->render(null, array(
@@ -89,6 +103,8 @@ class Entries extends Controller {
   function show($id) {
     $entry = $this->currentEntry($id);
 
+    $this->template->write('title', $entry->displayName);
+
     $this->render(null, array(
       'entry' => $entry
     ));
@@ -98,10 +114,10 @@ class Entries extends Controller {
     $entry = $this->currentEntry($id);
 
     if (!$entry->isAuthorized()) {
-      $flash = isset($_POST['password']) ? 'Sorry, that\'s not the right password <img src="'.site_url('/static/images/face-sad.png').'" />' : null;
+      $flash = isset($_POST['auth']) ? 'Sorry, that\'s not the right password <img src="'.site_url('/static/images/face-sad.png').'" />' : null;
       return $this->render('entries/login', array(
         'flash' => $flash
-        ));
+      ));
     }
 
     $this->render(null, array(
@@ -130,6 +146,7 @@ class Entries extends Controller {
     if (isset($_FILES['image'])) {
       if ($_FILES['image']['size'] > 0 && $_FILES['image']['size'] < 1000000) {
         $entry->setImage($_FILES['image']['tmp_name']);
+        $entry->save();
       }
     }
   }
@@ -142,14 +159,14 @@ class Entries extends Controller {
 
     $this->applyFormToEntry($entry);
 
-    redirect("/entries/show/".$entry->id);
+    redirect($entry->url('show'));
   }
 
   function update($id) {
     $entry = $this->currentEntry($id);
     if ($this->authCheck($entry)) {
       $this->applyFormToEntry($entry);
-      redirect("/entries/show/".$entry->id);
+      redirect($entry->url('show'));
     }
   }
 
@@ -158,18 +175,20 @@ class Entries extends Controller {
     if ($this->authCheck($entry)) {
       $entry->setImage(null); // Remove image files
       $entry->delete();
-      redirect('/entries');
+      redirect($entry->url());
     }
   }
 
   function tags() {
     $entries = new Entry();
-    $entries = $entries->get()->all;
+    $entries = $entries->get();
 
     $tags = array();
-    foreach ($entries as $entry) {
+    foreach ($entries->all as $entry) {
       preg_match_all('/(#\w+)/', $entry->description, $matches);
+      $matches = array_slice($matches, 0, 8);
       foreach ($matches[0] as $match) {
+        $match = strtolower($match);
         $tags[$match] = (isset($tags[$match]) ? $tags[$match] : 0) + 1;
       }
     }
