@@ -44,18 +44,26 @@ class Entries extends Controller {
   }
 
   function index_rss($entries) {
-    //header('Content-type:text/plain');
     header('Content-type:application/rss+xml');
     $entries->order_by('updated desc');
     $entries->limit(10);
     $entries = $entries->get();
     $this->load->view('entries/index_rss', array(
       'entries' => $entries
-      ));
+    ));
+  }
+
+  function index_csv($entries) {
+    header('Content-type:text/csv');
+    $entries->order_by('_sort');
+    $entries = $entries->get();
+
+    $this->load->view('entries/index_csv', array(
+      'entries' => $entries
+    ));
   }
 
   function index_kml($entries) {
-    //header('Content-type:text/plain');
     header('Content-type:text/plain');
     $entries->where('geocode !=', '');
     $entries->order_by('_sort');
@@ -63,7 +71,7 @@ class Entries extends Controller {
 
     $this->load->view('entries/index_kml', array(
       'entries' => $entries
-      ));
+    ));
   }
 
   function index() {
@@ -85,6 +93,8 @@ class Entries extends Controller {
 
     if ($format == 'rss') {
       return $this->index_rss($entries);
+    } else if ($format == 'csv') {
+      return $this->index_csv($entries);
     } else if ($format == 'kml') {
       return $this->index_kml($entries);
     }
@@ -134,7 +144,7 @@ class Entries extends Controller {
   }
 
   function applyFormToEntry($entry) {
-    $fields = explode(' ', "name company description email owner url phone address password");
+    $fields = explode(' ', "name company description email private_email url phone address password");
 
     foreach($fields as $field) {
       if (isset($_POST[$field])) $entry->$field = trim($_POST[$field]);

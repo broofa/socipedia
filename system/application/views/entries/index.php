@@ -34,7 +34,7 @@ text-decoration: underline;
 <div class="sidebar">
   <p>Get this search as a &hellip;</p>
   <a class="button" href="<?= $entries->url('rss', $q) ?>">RSS Feed</a>
-  <a class="button" href="#">CSV File</a>
+  <a class="button" href="<?= $entries->url('csv', $q) ?>">CSV File</a>
   <a class="button" href="<?= $entries->url('map', $q) ?>" target="_blank">Google Map</a>
 </div>
 

@@ -189,8 +189,8 @@ FIELDSET LEGEND {
 
     <legend>Private Information (required)</legend>
     <p>These fields are not made public.  They are required for quality and security purposes.</p>
-    <label for="owner">Contact Email</label>
-    <input name="owner" type="text" value="<?= $entry->owner ?>" />
+    <label for="private_email">Contact Email</label>
+    <input name="private_email" type="text" value="<?= $entry->private_email ?>" />
     <span class="hint">Who we should contact if there are any issues with this entry. Not shared. Not published. No spam.</span>
 
     <div class="sep"></div>

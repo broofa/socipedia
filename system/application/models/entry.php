@@ -104,11 +104,13 @@ class Entry extends DataMapper {
     switch ($type) {
     case 'map':
       return "http://maps.google.com/maps?q=".
-        urlencode($this->url('kml')."&ts=".time());
+        urlencode($this->url('kml', $option)."&ts=".time());
     case 'kml':
       return $this->url()."?q=$option&format=kml";
     case 'rss':
       return $this->url()."?q=$option&format=rss";
+    case 'csv':
+      return $this->url()."?q=$option&format=csv";
 
     case 'show':
       return $this->url().'/'.$this->id;
