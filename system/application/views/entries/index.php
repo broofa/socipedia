@@ -75,7 +75,7 @@ foreach($chars as $char) {
       ?>
     </dt>
     <dd>
-      <?= $entry->descriptionSummary ?>
+    <?= $entry->descriptionSummary ?>
     </dd>
     <? cleer() ?>
   <? } ?>

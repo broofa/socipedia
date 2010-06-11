@@ -26,9 +26,6 @@ define('BARD_UPLOAD_DIR', 'static/uploads');
 // Go to /pages/generate_password to create a password hash
 define('BARD_MASTER_HASH', 'insert_generated_hash_here');     
 
-// Google Maps Key (obtain from http://www.google.com/apis/maps/)
-define('BARD_GEOCODE_KEY', 'Your Google Maps Key');  
-
 // Akismet configuration (see http://vanhegan.net/software/akismet/ for details)
 $GLOBALS['akismet_key']   = 'Your akismet key';         // API Key (obtain from http://wordpress.com)
 $GLOBALS['akismet_home']  = 'Your site URL';

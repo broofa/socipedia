@@ -13,7 +13,7 @@ if (!$entry) {
     position: relative;
     text-align:justify;
   }
-  img {
+  .avatar {
     float: right;
     padding: 10px;
   }
@@ -81,12 +81,18 @@ if (!$entry) {
       <dd class="phone"><?= htmlify($entry->phone) ?></dd>
     <? } ?>
     <? if ($entry->address) { ?>
-      <dt class="label">address</dt>
-      <dd class="address"><?= htmlify($entry->address) ?></dd>
+      <dt class="label">address
+      </dt>
+      <dd class="address">
+      <a target="_blank" href="http://maps.google.com/maps?q=<?= urlencode($entry->address) ?>"><?= htmlify($entry->address) ?></a>
+</dd>
     <? } ?>
   </dl>
 
   <p style="font-size: 10px; color: #666;">
-  This entry was last updated on <?= $entry->updated ?>
+  updated: <?= $entry->updated ?>
+  <? if ($entry->geocode) { ?>
+    &bull; geocode: <?= htmlify($entry->geocode) ?>
+  <? } ?>
   </p>
 <? } ?>

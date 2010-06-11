@@ -245,7 +245,7 @@ FIELDSET LEGEND {
 
     <div class="sep"></div>
     <label for="description">Description</label>
-    <span class="hint">Additional info, if desired (<span id="description_left">1000</span> characters left)</span>
+    <span class="hint">(<span id="description_left">1000</span> characters left)</span>
     <span class="hint" style="float:right; width:200px">Hint: Add <a href="http://help.twitter.com/entries/49309-what-are-hashtags-symbols" target="_blank">#hashtags</a> to have your affiliations and areas of expertise listed on the <?= anchor('/entries/tags', 'Tags page') ?>. E.g. "We partner with <strong>#techalliance</strong> members to build <strong>#java</strong> solutions for the <strong>#biotech</strong> industry."</span>
     <textarea id="description" name="description" rows="16"><?= $entry->description ?></textarea>
   </fieldset>

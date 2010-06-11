@@ -83,7 +83,7 @@ class Entries extends Controller {
     $format=isset($params['format']) ? $params['format'] : null;
 
     $entries = new Entry();
-    $entries->select("*, CONCAT(name,company) as _sort", false);
+    $entries->select("*, CONCAT(company,name) as _sort", false);
 
     if ($unq) {
       $entries->like('company', $unq);
@@ -121,18 +121,21 @@ class Entries extends Controller {
   }
 
   function edit($id) {
+    $params = queryParams();
     $entry = $this->currentEntry($id);
+    $key = isset($params['key']) ? $params['key'] : null;
 
-    if (!$entry->isAuthorized()) {
+    if ($entry->isAuthorized() || $key == $entry->editKey) {
+      $this->render(null, array(
+        'entry' => $entry
+      ));
+    } else {
       $flash = isset($_POST['auth']) ? 'Sorry, that\'s not the right password <img src="'.site_url('/static/images/face-sad.png').'" />' : null;
       return $this->render('entries/login', array(
-        'flash' => $flash
+        'flash' => $flash,
+        'entry' => $entry
       ));
     }
-
-    $this->render(null, array(
-      'entry' => $entry
-    ));
   }
 
   function newAction() {
@@ -147,7 +150,10 @@ class Entries extends Controller {
     $fields = explode(' ', "name company description email private_email url phone address password");
 
     foreach($fields as $field) {
-      if (isset($_POST[$field])) $entry->$field = trim($_POST[$field]);
+      if (isset($_POST[$field])) {
+        $value = trim($_POST[$field]);
+        $entry->$field = $value;
+      }
     }
 
     $entry->save();
@@ -195,7 +201,7 @@ class Entries extends Controller {
 
     $tags = array();
     foreach ($entries->all as $entry) {
-      preg_match_all('/(#\w+)/', $entry->description, $matches);
+      preg_match_all(TAG_REGEX, $entry->description, $matches);
       $matches = array_slice($matches, 0, 8);
       foreach ($matches[0] as $match) {
         $match = strtolower($match);
@@ -206,5 +212,37 @@ class Entries extends Controller {
     $this->render(null, array(
       'tags' => $tags
     ));
+  }
+
+  function geocode($id) {
+    $entry = $this->currentEntry($id);
+    $json = $entry->_geocode();
+    dump($json);
+  }
+
+  function validate() {
+    $entries = new Entry();
+    $entries = $entries->get();
+
+    foreach ($entries->all as $entry) {
+      $entry->init();
+      $entry->_geocode();
+      $entry->save(false);
+      $this->template->write_view('content', 'entries/show', array(
+        'entry' => $entry
+      ));
+    }
+    $this->template->render();
+  }
+
+  function recover_password($id) {
+    $method = $_SERVER['REQUEST_METHOD'];
+    if ($method == 'POST') {
+      $entry = $this->currentEntry($id);
+      $entry->recoverPassword();
+      redirect($entry->url('recover_password'));
+    } else {
+      $this->render();
+    }
   }
 }

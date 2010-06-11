@@ -1,24 +1,31 @@
 <?
 
 class Entry extends DataMapper {
-  static $BLACKLIST = array(
-    'updated' => true,
-    'created' => true,
-    'created_ip' => true,
-    'auth' => true,
-    'salt' => true
+  static $PUBLIC_PROPERTIES = array(
+    'has_image' => true,
+    'name' => true,
+    'company' => true,
+    'email' => true,
+    'url' => true,
+    'phone' => true,
+    'address' => true,
+    'geocode' => true,
+    'description' => true,
+    '__end__' => true
   );
+
+  var $validation = array(
+    array(
+      'field' => 'address',
+      'label' => 'Address',
+      'rules' => array('geocode')
+    )
+  );
+  
 
   function Entry() {
     parent::DataMapper();
-
-    // Initialize once-only fields
-    if (!$this->created) {
-      $this->created = date ("Y-m-d H:i:s");
-    }
-    if(!$this->salt) {
-      $this->salt = uniqid(null, true);
-    }
+    $this->init();
   }
 
   static public function hash_password($password, $nonce = 'master nonce') {
@@ -29,9 +36,11 @@ class Entry extends DataMapper {
     if ($k == 'displayName') {
       $c = $this->company;
       $n = $this->name;
-      if ($n && $c) return "$n, $c";
+      if ($n && $c) return "$c, $n";
       if ($n) return $n;
       return $c ? $c : '- No name provided -';
+    } else if ($k == 'editKey') {
+      return substr($this->auth,20,10);
     } else if ($k == 'descriptionHtml') {
       return hashlinks(htmlify(parent::__get('description')));
     } else if ($k == 'descriptionSummary') {
@@ -48,15 +57,23 @@ class Entry extends DataMapper {
   }
 
   function __set($k, $v) {
-    if ($k == 'address') {
-      $this->geocode($v);
-    } if ($k == 'password') {
+    if ($k == 'password') {
       // Don't allow blank passwords to be set
       if (!$v) return;
       $k = 'auth';
       $v = $v ? self::hash_password($v, $this->salt) : null;
     }
     parent::__set($k, $v);
+  }
+
+  function init() {
+    // Initialize once-only fields
+    if (!$this->created) {
+      $this->created = date ("Y-m-d H:i:s");
+    }
+    if(!$this->salt) {
+      $this->salt = uniqid(null, true);
+    }
   }
 
   function delete() {
@@ -68,36 +85,40 @@ class Entry extends DataMapper {
     parent::delete();
   }
 
-  function save() {
+  function save($log = true) {
     $activity = new Activity($this->id);
     $stored = get_object_vars($this->stored);
     $isNew = !$this->id;
 
     parent::save();
 
-    $details = array();
-    $name = $this->displayName;
-    if ($isNew) {
-      $activity->entry_id = $this->id;
-      $activity->summary = "Created \"$name\"";
-      foreach ($stored as $key => $was) {
-        if (isset(self::$BLACKLIST[$key]) || !$this->$key) continue;
-        $now = $this->$key;
-        $details[] = "$key: $now"; 
-      }
-    } else {
-      $activity->summary = "Updated \"$name\"";
-      foreach ($stored as $key => $was) {
-        if (isset(self::$BLACKLIST[$key])) continue;
-        $now = $this->$key;
-        if ($was != $now) {
-          $details[] = "$key was: $was"; 
-          $details[] = "$key now: $now"; 
+    if ($log) {
+      $details = array();
+      $name = $this->displayName;
+      if ($isNew) {
+        $activity->entry_id = $this->id;
+        $activity->summary = "Created \"$name\"";
+        foreach ($stored as $key => $was) {
+          if (isset(self::$PUBLIC_PROPERTIES[$key])) {
+            $now = $this->$key;
+            $details[] = "$key: $now"; 
+          }
+        }
+      } else {
+        $activity->summary = "Updated \"$name\"";
+        foreach ($stored as $key => $was) {
+          if (isset(self::$PUBLIC_PROPERTIES[$key])) {
+            $now = $this->$key;
+            if ($was != $now) {
+              $details[] = "$key was: $was"; 
+              $details[] = "$key now: $now"; 
+            }
+          }
         }
       }
+      $activity->details = implode($details, "\n");
+      $activity->save();
     }
-    $activity->details = implode($details, "\n");
-    $activity->save();
   }
 
   function url($type=null, $option='') {
@@ -120,6 +141,8 @@ class Entry extends DataMapper {
       return $this->url().'/delete/'.$this->id;
     case 'new':
       return $this->url().'/new/'.$this->id;
+    case 'recover_password':
+      return $this->url().'/recover_password/'.$this->id;
     case 'create':
       return $this->url().'/create/'.$this->id;
     }
@@ -159,15 +182,9 @@ class Entry extends DataMapper {
     return BARD_UPLOAD_DIR . "/". $this->id . '_thumb.jpg';
   }
 
-  public function geocode($address) {
-    $key = BARD_GEOCODE_KEY;
-    if (!$address || !$key) {
-      return false;
-    }
-
-    $address = urlencode($address);
-    $url = "http://maps.google.com/maps/geo?q=${address}&output=xml&key=${key}";
-
+  public function _geocode($field = 'address') {
+    $address = urlencode($this->$field);
+    $url = "http://maps.google.com/maps/api/geocode/json?address=$address&sensor=false";
     // Fetch url. We'd like to do:
     //    $response = file_get_contents($url);
     // ...but has this is disabled in PHP on Dreamhost.  Instead we use curl, 
@@ -181,19 +198,24 @@ class Entry extends DataMapper {
     $start = microtime(true);
     curl_close($ch);
     $stop = microtime(true);
+
     // Parse the returned XML file
     try {
-      $xml = new SimpleXMLElement($response);
-      if ($xml->Response->Status->code == 200) {
-        // Normal response
-        $this->geocode = (string)$xml->Response->Placemark->Point->coordinates;
-      } else {
-        // For other codes, see
-        // http://www.google.com/apis/maps/documentation/reference.html#GGeoStatusCode
+      $json = json_decode($response);
+      $json->url = $url;
+      if ($json->status == 'OK') {
+        $geom = $json->results[0]->geometry;
+        // Compute diagonal distance across recommended viewport (in km)
+        $span = earthDist($geom->viewport->northeast, $geom->viewport->southwest);
+        $latlng = $geom->location;
+        $this->geocode = $span <= 2 ? "$latlng->lng,$latlng->lat" : '';
+        $json->geocode = $this->geocode;
       }
     } catch (Exception $e) {
-      // ??? - Not much we can do here.  Fail silently since this isn't a critical operation
+      // Not much we can do here.  Fail silently
+      return $e;
     }
+    return $json;
   }
 
   public function setImage($src) {
@@ -223,6 +245,14 @@ class Entry extends DataMapper {
       }
       $this->has_image = false;
     }
+  }
+
+  public function recoverPassword() {
+    // Send out a notification email
+    $to = $this->private_email;
+    $subject = "Access to ".PROJECT_NAME." '".$this->displayName."' entry";
+    $body = "To access the '".$this->displayName."' entry, go to this URL:\n".$this->url('edit')."?key=".$this->editKey;
+    mail($to, $subject, $body, "From: no-reply@no-reply.com");
   }
 }
 
