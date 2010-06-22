@@ -1,27 +1,11 @@
 <?
-class Entries extends Controller {
+require_once('basecontroller.php');
+
+class Entries extends BaseController {
   var $data;
 
   function Entries() {
-    parent::Controller();	
-  }
-
-  function _remap($method) {
-    if (method_exists($this, $method)) {
-      call_user_func_array(array(&$this, $method), array_slice($this->uri->rsegments, 2));
-    } else {
-      $this->render();
-    }
-  }
-
-  // Do tasks common to all actions.  We may want to refactor this into a parent
-  // controller class?
-  function render($view=null, $data=null) {
-    if (!$view) $view = "entries/".$this->router->method;
-
-    // Apply data to the appropriate view, and render it
-    $this->template->write_view('content', $view, $data);
-    $this->template->render();
+    parent::__construct();	
   }
 
   function currentEntry($id = null) {
@@ -37,10 +21,8 @@ class Entries extends Controller {
   function authCheck($entry) {
     if (!$entry->isAuthorized()) {
       $this->render('entries/failed');
-      return false;
+      die();
     }
-
-    return true;
   }
 
   function index_rss($entries) {
@@ -74,7 +56,7 @@ class Entries extends Controller {
     ));
   }
 
-  function index() {
+  function do_index() {
     $view = null;
     $params = queryParams();
 
@@ -110,7 +92,7 @@ class Entries extends Controller {
     ));
   }
 
-  function show($id) {
+  function do_show($id) {
     $entry = $this->currentEntry($id);
 
     $this->template->write('title', $entry->displayName);
@@ -120,7 +102,7 @@ class Entries extends Controller {
     ));
   }
 
-  function edit($id) {
+  function do_edit($id) {
     $params = queryParams();
     $entry = $this->currentEntry($id);
     $key = isset($params['key']) ? $params['key'] : null;
@@ -138,7 +120,7 @@ class Entries extends Controller {
     }
   }
 
-  function newAction() {
+  function do_new() {
     $entry = new Entry();
 
     $this->render('entries/edit', array(
@@ -156,6 +138,12 @@ class Entries extends Controller {
       }
     }
 
+    if (isSpam($entry->displayName, $entry->email, $entry->description)) {
+      $this->template->write('content', 'Yuck, that really didn\'t taste very good!');
+      $this->template->render();
+      die();
+    }
+
     $entry->save();
 
     // Do this after entry save since we need to know the entry ID
@@ -167,7 +155,7 @@ class Entries extends Controller {
     }
   }
 
-  function create() {
+  function do_create() {
     $entry = new Entry();
 
     // Record IP that created this record (for use in spam filtering)
@@ -175,27 +163,29 @@ class Entries extends Controller {
 
     $this->applyFormToEntry($entry);
 
-    redirect($entry->url('show'));
+    redirect(url_to($entry, 'show'));
   }
 
-  function update($id) {
+  function do_update($id) {
     $entry = $this->currentEntry($id);
-    if ($this->authCheck($entry)) {
-      $this->applyFormToEntry($entry);
-      redirect($entry->url('show'));
-    }
+
+    $this->authCheck($entry);
+
+    $this->applyFormToEntry($entry);
+    redirect(url_to($entry, 'show'));
   }
 
-  function delete($id) {
+  function do_delete($id) {
     $entry = $this->currentEntry($id);
-    if ($this->authCheck($entry)) {
-      $entry->setImage(null); // Remove image files
-      $entry->delete();
-      redirect($entry->url());
-    }
+
+    $this->authCheck($entry);
+    
+    $entry->setImage(null); // Remove image files
+    $entry->delete();
+    redirect(url_to('entries'));
   }
 
-  function tags() {
+  function do_tags() {
     $entries = new Entry();
     $entries = $entries->get();
 
@@ -214,35 +204,67 @@ class Entries extends Controller {
     ));
   }
 
-  function geocode($id) {
+  function do_geocode($id) {
     $entry = $this->currentEntry($id);
     $json = $entry->_geocode();
     dump($json);
   }
 
-  function validate() {
+  function do_recache() {
+    $params = queryParams();
+
     $entries = new Entry();
     $entries = $entries->get();
 
     foreach ($entries->all as $entry) {
-      $entry->init();
-      $entry->_geocode();
-      $entry->save(false);
-      $this->template->write_view('content', 'entries/show', array(
-        'entry' => $entry
-      ));
+      if (isset($params['state'])) {
+        $entry->init();
+        $entry->_geocode();
+        $entry->save(false);
+        $this->template->write('content', "Recached $entry->displayName<br />");
+      }
+
+      if (isset($params['thumb'])) {
+        // Re-render thumbnails
+        if ($entry->has_image) {
+          $entry->renderThumb();
+          $this->template->write('content', "Recached thumbnail for $entry->displayName<br />");
+        }
+      }
+
+      // $this->template->write_view('content', 'entries/show', array(
+      //   'entry' => $entry
+      // ));
     }
     $this->template->render();
   }
 
-  function recover_password($id) {
-    $method = $_SERVER['REQUEST_METHOD'];
-    if ($method == 'POST') {
+  function do_recover_password($id) {
+    if (isPost()) {
       $entry = $this->currentEntry($id);
       $entry->recoverPassword();
-      redirect($entry->url('recover_password'));
+      redirect(url_to('entries', 'recover_password'));
     } else {
       $this->render();
     }
+  }
+
+  function do_comment($id) {
+    $entry = $this->currentEntry($id);
+    if (!$entry) {
+      show_404();
+    } else if (isPost()) {
+      $params = $_POST;
+      $action = isset($params['action']) ? $params['action'] : '';
+      $comment = new Comment($entry->id, $action);
+      $comment->body = isset($params['body']) ? $params['body'] : '';
+      if (isSpam(null, null, $comment->body)) {
+        $this->template->write('content', 'Yuck, that really didn\'t taste very good!');
+        $this->template->render();
+        die();
+      }
+      $comment->save();
+    }
+    redirect(url_to($entry, 'show'));
   }
 }

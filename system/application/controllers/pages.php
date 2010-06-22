@@ -1,7 +1,9 @@
 <?
-class Pages extends Controller {
+require_once('basecontroller.php');
+
+class Pages extends BaseController {
 	function Pages() {
-		parent::Controller();	
+		parent::__construct();	
 	}
 
   function _remap($method) {

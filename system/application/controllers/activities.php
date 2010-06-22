@@ -1,7 +1,7 @@
 <?
-class Activities extends Controller {
+class Activities extends BaseController {
   function Activities() {
-    parent::Controller();	
+    parent::__construct();	
   }
 
   function index() {

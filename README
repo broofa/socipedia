@@ -1,1 +1,9 @@
-README coming soon
+Socipedia is a minimal, php-based, web app that provides a crowd-sourced business directory solution.  Features include ...
+
+- Spam filtering (using Akismet)
+- Google maps integration
+- Activity log
+- No login or registration required
+- Uber-simple control control (password-protected entries)
+- RSS support
+- Export to CSV

@@ -1,6 +1,17 @@
 <?
+define('CONVERT_CMD', '/usr/bin/convert -flatten SRC -background white -thumbnail "SIZE" DST');
 
 class Entry extends DataMapper {
+  var $has_one = array('user');
+
+  var $validation = array(
+    array(
+      'field' => 'address',
+      'label' => 'Address',
+      'rules' => array('geocode')
+    )
+  );
+  
   static $PUBLIC_PROPERTIES = array(
     'has_image' => true,
     'name' => true,
@@ -14,17 +25,8 @@ class Entry extends DataMapper {
     '__end__' => true
   );
 
-  var $validation = array(
-    array(
-      'field' => 'address',
-      'label' => 'Address',
-      'rules' => array('geocode')
-    )
-  );
-  
-
   function Entry() {
-    parent::DataMapper();
+    parent::__construct();
     $this->init();
   }
 
@@ -41,8 +43,12 @@ class Entry extends DataMapper {
       return $c ? $c : '- No name provided -';
     } else if ($k == 'editKey') {
       return substr($this->auth,20,10);
+    } else if ($k == 'stale') {
+      $cutoff = time() - 365*(24*60*60);
+      $stamp = strtotime($this->updated);
+      return $stamp < $cutoff;
     } else if ($k == 'descriptionHtml') {
-      return hashlinks(htmlify(parent::__get('description')));
+      return hashlinks(linkify(htmlify(parent::__get('description'))));
     } else if ($k == 'descriptionSummary') {
       return htmlify(substr_replace(parent::__get('description'), ' ...', 140), false);
     } else if ($k == 'rssDate') {
@@ -76,6 +82,14 @@ class Entry extends DataMapper {
     }
   }
 
+  function getComments() {
+    $comments = new Comment();
+    $comments->where('entry_id', $this->id);
+    $comments->order_by('created');
+    $comments->get();
+    return $comments;
+  }
+
   function delete() {
     $activity = new Activity($this->id);
     $name = $this->displayName;
@@ -86,13 +100,13 @@ class Entry extends DataMapper {
   }
 
   function save($log = true) {
-    $activity = new Activity($this->id);
-    $stored = get_object_vars($this->stored);
-    $isNew = !$this->id;
-
     parent::save();
 
     if ($log) {
+      $activity = new Activity($this->id);
+      $stored = get_object_vars($this->stored);
+      $isNew = !$this->id;
+
       $details = array();
       $name = $this->displayName;
       if ($isNew) {
@@ -116,7 +130,7 @@ class Entry extends DataMapper {
           }
         }
       }
-      $activity->details = implode($details, "\n");
+      $activity->body = implode($details, "\n");
       $activity->save();
     }
   }
@@ -137,16 +151,10 @@ class Entry extends DataMapper {
       return $this->url().'/'.$this->id;
     case 'edit':
       return $this->url().'/edit/'.$this->id.($option ? "#$option" : '');
+    default:
     case 'delete':
-      return $this->url().'/delete/'.$this->id;
-    case 'new':
-      return $this->url().'/new/'.$this->id;
-    case 'recover_password':
-      return $this->url().'/recover_password/'.$this->id;
-    case 'create':
-      return $this->url().'/create/'.$this->id;
+      return $type ? $this->url()."/$type/".$this->id : site_url('/entries');
     }
-    return site_url('/entries');
   }
 
   public function isAuthorized($passwd = null) {
@@ -218,9 +226,13 @@ class Entry extends DataMapper {
     return $json;
   }
 
-  public function setImage($src) {
-    $CONVERT = '/usr/bin/convert -flatten SRC -background white -thumbnail "SIZE" DST';
+  function renderThumb() {
+    $cmd = str_replace(array('SRC', 'DST', 'SIZE'),
+      array($this->imagePath(), $this->thumbPath(), '48x48'), CONVERT_CMD);
+    exec($cmd);
+  }
 
+  public function setImage($src) {
     if ($src) {
       // Create upload dir if necessary
       if (!file_exists(BARD_UPLOAD_DIR)) {
@@ -229,13 +241,10 @@ class Entry extends DataMapper {
 
       // Create 192px version
       $cmd = str_replace(array('SRC', 'DST', 'SIZE'),
-        array($src, $this->imagePath(), '192x192>'), $CONVERT);
+        array($src, $this->imagePath(), '192x192>'), CONVERT_CMD);
       exec($cmd);
 
-      // Create 32px versior/bin/convert';
-      $cmd = str_replace(array('SRC', 'DST', 'SIZE'),
-        array($src, $this->thumbPath(), '96x48'), $CONVERT);
-      exec($cmd);
+      $this->renderThumb();
 
       $this->has_image = true;
     } else {

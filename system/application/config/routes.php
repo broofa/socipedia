@@ -40,7 +40,6 @@
 |
 */
 
-$route['(:any)/new'] = "$1/newAction";
 $route['entries/(:num)'] = "entries/show/$1";
 $route['default_controller'] = "pages";
 $route['scaffolding_trigger'] = "";

@@ -6,7 +6,7 @@
   <channel> 
     <title><?= PROJECT_NAME ?></title> 
     <description>Recent Activity</description> 
-    <atom:link href="<?= site_url('/entries?format=rss') ?>" rel="self" type="application/rss+xml" /> 
+    <atom:link href="<?= url_to('entries', null, 'format=rss') ?>" rel="self" type="application/rss+xml" /> 
     <link><?= site_url('') ?></link> 
     <lastBuildDate><?= $entries->rssDate ?></lastBuildDate> 
     <generator>http://github.com/broofa/socipedia</generator> 
@@ -17,8 +17,8 @@
     <? foreach ($entries->all as $entry) { ?>
       <item> 
         <title><?= $entry->displayName ?></title> 
-        <guid><?= $entry->url('show') ?></guid>
-        <link><?= $entry->url('show') ?></link> 
+        <guid><?= url_to($entry, 'show') ?></guid>
+        <link><?= url_to($entry, 'show') ?></link> 
         <pubDate><?= $entry->rssDate ?></pubDate> 
         <description><![CDATA[<?= $entry->descriptionHtml ?>]]></description> 
       </item> 

@@ -13,10 +13,6 @@ if (!$entry) {
     position: relative;
     text-align:justify;
   }
-  .avatar {
-    float: right;
-    padding: 10px;
-  }
   .contact_info {
     padding:6px 0px;
     margin:6px 0px;
@@ -41,26 +37,66 @@ if (!$entry) {
     float: right;
     clear: both;
     padding: 4px;
-    border: solid 1px #eee;
     background-color: #fff;
-    border-radius: 4px;
-    -moz-border-radius: 4px;
-    -webkit-border-radius: 4px;
     margin: 0px 0px 10px 10px;
-    -moz-box-shadow: inset 2px 2px 2px rgba(0,0,0,.5);
-    -webkit-box-shadow: inset 1px 1px 1px rgba(0,0,0,.5);
+  }
+
+  #comments {
+    margin: 10px 0px;
+    padding: 0px;
+    list-style: none;
+  }
+  #comments .comment {
+    font-size: 90%;
+  }
+  #comments .comment .created {
+    color: #666;
+  }
+  #comments .comment .body {
+    margin-left: 10px;
+  }
+  #footer {
+    color: #666;
+    margin: 10px 0px;
+  }
+  #map {
+    float: right;
+    text-align: center;
+    font-size: 10pt;
+    clear: right;
   }
   </style>
 
   <div class="sidebar">
-    <?= anchor($entry->url('edit'), 'Edit this entry', 'class="button"') ?>
+    <?= anchor(url_to($entry, 'edit'), 'Edit entry', 'class="button"') ?>
   </div>
+  <? if (false && $entry->geocode) { ?>
+    <div id="map">
+      <iframe
+        <?
+        $mapUrl = $entry->address;
+        $mapUrl = preg_replace('/\s/', '+', $mapUrl);
+        $mapUrl = "http://maps.google.com/maps?q=".htmlify($mapUrl);
+        ?>
+        width="200"
+        height="200"
+        frameborder="0"
+        scrolling="no"
+        marginheight="0"
+        marginwidth="0"
+        src="<?= $mapUrl."&output=embed&iwloc=near" ?>"></iframe>
+        <br />
+        <a href="<?= $mapUrl ?>">View Larger Map</a>
+    </div>
+  <? } ?>
 
   <? if ($entry->has_image) { ?>
     <img class="avatar large" src="<?= $entry->imageURL() ?>" />
   <? } ?>
 
-  <h2><?= $entry->displayName ?></h2>
+  <h2 class="<?= $entry->stale ? "stale" : "" ?>">
+    <?= $entry->displayName ?>
+  </h2>
 
   <div class="description">
 
@@ -84,12 +120,37 @@ if (!$entry) {
       <dt class="label">address
       </dt>
       <dd class="address">
-      <a target="_blank" href="http://maps.google.com/maps?q=<?= urlencode($entry->address) ?>"><?= htmlify($entry->address) ?></a>
+      <a href="http://maps.google.com/maps?q=<?= urlencode($entry->address) ?>"><?= htmlify($entry->address) ?></a>
 </dd>
     <? } ?>
   </dl>
 
-  <p style="font-size: 10px; color: #666;">
+  <?
+  $comments = $entry->getComments()->all;
+  if (count($comments) > 0) {
+  ?>
+    <h3>Comments</h3>
+    <ul id="comments">
+      <? foreach ($comments as $comment) { ?>
+        <li class="comment"><span class="created"><?= $comment->created ?></span></span><span class="body"><?= linkify(htmlify($comment->body)) ?></span><span class="action"><?= $comment->action ? " ($comment->action)" : ''?></li>
+      <? } ?>
+    </ul>
+  <? } ?>
+  <p style="font-weight: bold">Add a comment / request action on this entry</p>
+  <form id="comment_ui" style="margin-bottom: 15px;" action="<?= url_to($entry, 'comment') ?>" method="POST">
+    <textarea name="body" style="width: 400px; height: 80px"></textarea><br />
+    <select name="action">
+      <option value="" selected>Requested action ...</option>
+      <option value="">None - just leavin' a comment</option>
+      <option value="update">Update entry - some information is wrong</option>
+      <option value="delete">Remove entry - it's no longer valid/relevant</option>
+      <option value="claim">Claim entry - I want control over this!</option>
+      <option value="other">Other (see comment)</option>
+    </select>
+    <input style="margin-left: 40px;" type="submit" value="Submit" />
+  </form>
+
+  <p id="footer">
   updated: <?= $entry->updated ?>
   <? if ($entry->geocode) { ?>
     &bull; geocode: <?= htmlify($entry->geocode) ?>

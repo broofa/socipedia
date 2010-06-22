@@ -4,6 +4,8 @@ HTML {
 BODY {
   font-family: Lucida Grande, Verdana, sans-serif;
   font-size: 12px;
+  margin: 0px;
+  padding: 0px;
 }
 P {
   line-height: 1.5;
@@ -60,38 +62,56 @@ INPUT[type="text"], INPUT[type="password"], TEXTAREA {
 
 #page {
   width: 800px;
-  background-color: #fff;
-  margin: 10px auto;
-  border: solid 1px #ccc;
+  margin: 10px auto 0px;
+  position: relative;
+}
+
+#banner, #content {
   border-radius: 10px;
   -moz-border-radius: 10px;
   -webkit-border-radius: 10px;
-  box-shadow: 2px 2px 2px rgba(0,0,0,.5);
-  -moz-box-shadow: 2px 2px 2px rgba(0,0,0,.5);
-  -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,.5);
+  box-shadow: 4px 4px 2px rgba(0,0,0,.5);
+  -moz-box-shadow: 4px 4px 2px rgba(0,0,0,.5);
+  -webkit-box-shadow: 4px 4px 2px rgba(0,0,0,.5);
 }
 
-#content  {
-  padding: 12px;
-}
 #banner {
+  /* background: url(http://farm4.static.flickr.com/3312/3441523543_e42ae65a2b_b.jpg) center -190px; */
+  /* background: url(http://farm3.static.flickr.com/2440/3588629512_49c26e2215_b.jpg) -200px -250px; */
+  background: url(../images/banner_bg.jpg) no-repeat center bottom;
+  background-repeat: no-repeat;
   background-color: #eee;
+
+  color: #fff;
+  text-shadow: 2px 2px 4px #000;
+
+  margin: 10px 0px 0px;
   text-align: center;
-  margin: 4px;
-  padding: 16px 0px;
-  border: solid 1px #ccc;
-  border-radius: 8px;
-  -moz-border-radius: 8px;
-  -webkit-border-radius: 8px;
-  box-shadow: inset 1px 1px 1px rgba(0,0,0,.5);
-  -moz-box-shadow: inset 1px 1px 1px rgba(0,0,0,.5);
-  -webkit-box-shadow: inset 1px 1px 1px rgba(0,0,0,.5);
+  line-height: 80px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+  -moz-border-radius-bottomleft: 0px;
+  -moz-border-radius-bottomright: 0px;
+  -webkit-border-bottom-left-radius: 0px;
+  -webkit-border-bottom-right-radius: 0px;
+}
+
+#session_controls {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  padding: 2px 10px;
+}
+#session_controls a {
+  margin-right: 10px;
 }
 
 #navbar {
-  position: relative;
-  margin-top: -15px;
+  position: absolute;
+  top: 70px;
+  z-index: 1;
   text-align: center;
+  width: 100%;
 }
 
 #navbar FORM, #navbar INPUT {
@@ -109,6 +129,19 @@ INPUT[type="text"], INPUT[type="password"], TEXTAREA {
   -webkit-border-radius: 10px;
   border: solid 1px #ccc;
   background: url(https://webapp.mis.vanderbilt.edu/more/images/search.png) 4px no-repeat #fff;
+}
+
+#content  {
+  position: relative;
+  z-index: 0;
+  padding: 10px;
+  background-color: #fff;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+  -moz-border-radius-topleft: 0px;
+  -moz-border-radius-topright: 0px;
+  -webkit-border-top-left-radius: 0px;
+  -webkit-border-top-right-radius: 0px;
 }
 
 .sidebar {
@@ -133,14 +166,13 @@ INPUT[type="text"], INPUT[type="password"], TEXTAREA {
   color: #840;
 }
 
-#by_link {
+.stale {
+  background: url(../../static/images/stale.png) no-repeat right center;
+}
+
+#footer {
   font-size: 10px;
   text-align: center;
-  background-color: #ddd;
-  display: block;
-  width: 150px;
-  margin: 2px auto;
-  border-radius: 10px;
-  -moz-border-radius: 10px;
-  -webbkit-border-radius: 10px;
+  margin-top: 10px;
 }
+

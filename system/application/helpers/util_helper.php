@@ -1,7 +1,7 @@
 <?
 include "app_config.php";
 
-define('TAG_REGEX', '/#([a-zA-Z][\w-]*)/');
+define('TAG_REGEX', '/(?:\s#)([a-zA-Z][\w-]*)/');
 
 function dump($o) {
   echo "<h3>dump</h3><pre>";
@@ -15,10 +15,30 @@ function stack() {
   echo "</pre>";
 }
 
+function url_to($model='', $action=null, $params = null) {
+  if ($model instanceof DataMapper) {
+    $class = strtolower(plural(get_class($model)));
+    $path = $action ? "$class/$action/$model->id" : "$class/$model->id";
+  } else if ($model) {
+    $path = $action ? "$model/$action" : "$model";
+  } else {
+    $path = "/";
+  }
+  if ($params) $path = "$path.?$params";
+
+  return site_url($path);
+}
+
 function queryParams() {
   parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $params);
   return $params;
 }
+
+function isGet() {return $_SERVER['REQUEST_METHOD'] == 'GET';}
+function isPost() {return $_SERVER['REQUEST_METHOD'] == 'POST';}
+function isPut() {return $_SERVER['REQUEST_METHOD'] == 'PUT';}
+function isDelete() {return $_SERVER['REQUEST_METHOD'] == 'DELETE';}
+function isHead() {return $_SERVER['REQUEST_METHOD'] == 'HEAD';}
 
 function cleer() {
   echo '<div class="cleer"></div>';
@@ -40,10 +60,14 @@ function hashlinks($s) {
   return preg_replace_callback(TAG_REGEX, '_hashlinks', $s);
 }
 
-function weblink($url, $text=null, $blank=false) {
+function linkify($s) {
+  return preg_replace('@(https?://([-\w\.]+)+(:\d+)?(/([\w/_\.-]*(\?\S+)?)?)?)@', '<a href="$1" rel="nofollow">$1</a>', $s);
+}
+
+function weblink($url, $text=null) {
   if (!$text) $text = $url;
   if (!preg_match('|^http|', $url)) $url = "http://$url";
-  return "<a href=\"$url\" rel=\"nofollow\"".($blank ? ' target="_blank"' : '').">".htmlify($text)."</a>";
+  return "<a href=\"$url\" rel=\"nofollow\"".">".htmlify($text)."</a>";
 }
 
 function htmlify($s, $escape=true) {
@@ -55,9 +79,9 @@ function htmlify($s, $escape=true) {
 // Check to see if Akismet thinks an entry is spam.  Note that this hits the 
 // Akismet service every time it's called, so use sparingly!
 //
-// (Note: To test this, enter "viagra-test-123" the name, company, or 
+// (Note: To test this, enter "viagra-test-123" in the name, company, or 
 // description fields. See http://akismet.com/development/api/ for more info)
-function entryIsSpam($entry) {
+function isSpam($author = '', $email = '', $content = '') {
   $spam = false;
 
   if (isset($GLOBALS['akismet_key'])) {
@@ -70,9 +94,9 @@ function entryIsSpam($entry) {
 
     // The body of the message to check, the name of the person who
     // posted it, and their email address
-    $vars['comment_content']        = $entry->description;
-    $vars['comment_author']         = $entry->name . ' ' . $entry->company;
-    $vars['comment_author_email']   = $entry->email;
+    $vars['comment_author']         = $author;
+    $vars['comment_author_email']   = $email;
+    $vars['comment_content']        = $content;
 
     // ... Add more fields if you want
 

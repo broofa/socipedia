@@ -21,7 +21,7 @@ dl dd {
       <?= anchor('/entries/show/'.$activity->entry_id, $activity->summary); ?>
     </dt>
     <dd>
-      <?= htmlify($activity->details, true) ?>
+      <?= htmlify($activity->body, true) ?>
     </dd>
   <? } ?>
 </dl>
