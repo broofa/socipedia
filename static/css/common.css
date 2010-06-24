@@ -131,6 +131,13 @@ INPUT[type="text"], INPUT[type="password"], TEXTAREA {
   background: url(https://webapp.mis.vanderbilt.edu/more/images/search.png) 4px no-repeat #fff;
 }
 
+#flash {
+  text-align: center;
+  color: #630;
+  border: dashed 1px #ccc;
+  border-width: 1px 0px;
+}
+
 #content  {
   position: relative;
   z-index: 0;

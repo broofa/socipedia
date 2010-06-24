@@ -17,25 +17,28 @@
       <div id="session_controls">
         <? if (isset($currentUser)) { ?>
           welcome,
-          <a href="<?= url_to('users', 'show') ?>"><?= $currentUser->display_name ?></a>
-          <a href="<?= url_to('users', 'edit') ?>">settings</a>
-          <a href="<?= url_to('users', 'logout') ?>">logout</a>
+          <?= link_to($currentUser, 'show', htmlify($currentUser->display_name)) ?>
+          <?= link_to($currentUser, 'edit', 'settings') ?>
+          <?= link_to('users', 'logout', 'logout') ?>
         <? } else { ?>
-          <a href="<?= url_to('users', 'login') ?>">login</a>
+          <?= link_to('users', 'new', 'register') ?>
+          <?= link_to('users', 'login', 'login') ?>
         <? } ?>
       </div>
 
       <div id="navbar">
-        <a href="<?= url_to() ?>" class="button left_cap">Home</a><a href="<?= url_to('pages', 'contact') ?>" class="button right_cap">Contact</a>
-        <a href="<?= url_to('entries') ?>" class="button left_cap">Browse</a><a href="<?= url_to('entries', 'tags') ?>" class="button right_cap">Tags</a>
+        <?= link_to(null, null, 'Home', 'class="button left_cap"') ?><?= link_to('pages', 'contact', 'Contact', 'class="button right_cap"') ?>
+        <?= link_to('entries', null, 'Browse', 'class="button left_cap"') ?><?= link_to('entries', 'tags', 'Tags', 'class="button right_cap"') ?>
 
-        <a href="<?= url_to('entries', 'new') ?>" class="button">Add an Entry</a>
+        <?= link_to('entries', 'new', 'Add an Entry', 'class="button"') ?>
         <form action="<?= url_to('entries') ?>" method="GET">
         <input type="text" name="q" onready="this.focus()" />
         </form>
       </div>
 
+
       <div id="content">
+        <?= $flash ?>
         <?= $content ?>
         <?= cleer() ?>
       </div>

@@ -15,7 +15,6 @@ class Entry extends DataMapper {
   static $PUBLIC_PROPERTIES = array(
     'has_image' => true,
     'name' => true,
-    'company' => true,
     'email' => true,
     'url' => true,
     'phone' => true,
@@ -35,13 +34,7 @@ class Entry extends DataMapper {
   }
 
   function __get($k) {
-    if ($k == 'displayName') {
-      $c = $this->company;
-      $n = $this->name;
-      if ($n && $c) return "$c, $n";
-      if ($n) return $n;
-      return $c ? $c : '- No name provided -';
-    } else if ($k == 'editKey') {
+    if ($k == 'editKey') {
       return substr($this->auth,20,10);
     } else if ($k == 'stale') {
       $cutoff = time() - 365*(24*60*60);
@@ -92,47 +85,11 @@ class Entry extends DataMapper {
 
   function delete() {
     $activity = new Activity($this->id);
-    $name = $this->displayName;
+    $name = $this->name;
     $activity->summary = "Deleted \"$name\"";
     $activity->save();
 
     parent::delete();
-  }
-
-  function save($log = true) {
-    parent::save();
-
-    if ($log) {
-      $activity = new Activity($this->id);
-      $stored = get_object_vars($this->stored);
-      $isNew = !$this->id;
-
-      $details = array();
-      $name = $this->displayName;
-      if ($isNew) {
-        $activity->entry_id = $this->id;
-        $activity->summary = "Created \"$name\"";
-        foreach ($stored as $key => $was) {
-          if (isset(self::$PUBLIC_PROPERTIES[$key])) {
-            $now = $this->$key;
-            $details[] = "$key: $now"; 
-          }
-        }
-      } else {
-        $activity->summary = "Updated \"$name\"";
-        foreach ($stored as $key => $was) {
-          if (isset(self::$PUBLIC_PROPERTIES[$key])) {
-            $now = $this->$key;
-            if ($was != $now) {
-              $details[] = "$key was: $was"; 
-              $details[] = "$key now: $now"; 
-            }
-          }
-        }
-      }
-      $activity->body = implode($details, "\n");
-      $activity->save();
-    }
   }
 
   function url($type=null, $option='') {
@@ -155,6 +112,16 @@ class Entry extends DataMapper {
     case 'delete':
       return $type ? $this->url()."/$type/".$this->id : site_url('/entries');
     }
+  }
+
+  public function canEdit($user=null) {
+    if ($user) {
+      if ($user->is_admin) return true;
+
+      $this->user->get();
+      if ($this->user && $this->user->id == $user->id) return true;
+    }
+    return false;
   }
 
   public function isAuthorized($passwd = null) {
@@ -259,8 +226,8 @@ class Entry extends DataMapper {
   public function recoverPassword() {
     // Send out a notification email
     $to = $this->private_email;
-    $subject = "Access to ".PROJECT_NAME." '".$this->displayName."' entry";
-    $body = "To access the '".$this->displayName."' entry, go to this URL:\n".$this->url('edit')."?key=".$this->editKey;
+    $subject = "Access to ".PROJECT_NAME." '".$this->name."' entry";
+    $body = "To access the '".$this->name."' entry, go to this URL:\n".$this->url('edit')."?key=".$this->editKey;
     mail($to, $subject, $body, "From: no-reply@no-reply.com");
   }
 }

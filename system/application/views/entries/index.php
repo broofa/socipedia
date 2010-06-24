@@ -75,7 +75,7 @@ text-decoration: underline;
 $chars = array();
 
 foreach($entries->all as $entry) {
-  $char = strtoupper(substr($entry->displayName, 0,1));
+  $char = strtoupper(substr($entry->name, 0,1));
   $chars[] = $char;
 }
 sort($chars);
@@ -90,7 +90,7 @@ foreach($chars as $char) {
   <?
   $lastchar = "";
   foreach($entries->all as $entry) {
-    $dn = $entry->displayName;
+    $dn = $entry->name;
     $char = strtoupper(substr($dn, 0,1));
     if ($char != $lastchar) {
       echo "<div class=\"section\"><a name=\"section_$char\">$char</a></div>";

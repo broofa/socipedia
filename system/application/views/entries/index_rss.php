@@ -16,7 +16,7 @@
 
     <? foreach ($entries->all as $entry) { ?>
       <item> 
-        <title><?= $entry->displayName ?></title> 
+        <title><?= $entry->name ?></title> 
         <guid><?= url_to($entry, 'show') ?></guid>
         <link><?= url_to($entry, 'show') ?></link> 
         <pubDate><?= $entry->rssDate ?></pubDate> 

@@ -1,6 +1,6 @@
 <?
 abstract class BaseModel extends DataMapper {
-  function BaseModel() {
+  function __construct() {
     parent::__construct();
   }
 
@@ -27,15 +27,17 @@ abstract class BaseModel extends DataMapper {
   }
 
   /*
-  function save($log = true) {
+  function save($object='', $log = true) {
     $action = $this->id ? 'updated' : 'inserted';
-    parent::save();
+
+    $args = func_get_args();
+    call_user_func_array(array('parent', 'save'), $args);
 
     if ($log) {
       $this->logActivity($action);
     }
   }
-   */
+     */
 }
 ?>
 

@@ -1,10 +1,12 @@
 <?
+require_once('basecontroller.php');
+
 class Activities extends BaseController {
   function Activities() {
     parent::__construct();	
   }
 
-  function index() {
+  function do_index() {
     $MAX = 200;
     $activities = new Activity();
     $activities->order_by('updated desc');

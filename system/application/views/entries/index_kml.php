@@ -3,7 +3,7 @@
   <Document>
   <? foreach ($entries->all as $entry) { ?>
     <Placemark>
-      <name><?= htmlify($entry->displayName, false) ?></name>
+      <name><?= htmlify($entry->name, false) ?></name>
       <description><![CDATA[
         <?= $entry->descriptionSummary ?>
         <br/>

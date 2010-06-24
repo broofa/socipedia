@@ -4,8 +4,18 @@ class User extends BaseModel {
 
   var $validation = array(
     array(
-      'field' => 'password',
-      'label' => 'Password',
+      'field' => 'email',
+      'label' => 'email address',
+      'rules' => array('required', 'valid_email')
+    ),
+    array(
+      'field' => 'display_name',
+      'label' => 'name',
+      'rules' => array('required')
+    ),
+    array(
+      'field' => 'salted_passwd',
+      'label' => 'password',
       'rules' => array('required')
     )
   );
@@ -41,9 +51,9 @@ class User extends BaseModel {
   function __set($k, $v) {
     if ($k == 'password') {
       // Don't allow blank passwords to be set
-      if (!$v) throw new Exception('Password must not be blank');
       $k = 'salted_passwd';
       $v = $v ? self::hashPassword($v, $this->salt) : null;
+dump("$k -> '$v'");
     }
     parent::__set($k, $v);
   }

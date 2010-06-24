@@ -8,23 +8,6 @@ class Entries extends BaseController {
     parent::__construct();	
   }
 
-  function currentEntry($id = null) {
-    $entry = new Entry();
-    $entry->where('id', $id)->get();
-    if (!$entry->created) {
-      show_404();
-      die();
-    }
-    return $entry;
-  }
-
-  function authCheck($entry) {
-    if (!$entry->isAuthorized()) {
-      $this->render('entries/failed');
-      die();
-    }
-  }
-
   function index_rss($entries) {
     header('Content-type:application/rss+xml');
     $entries->order_by('updated desc');
@@ -35,9 +18,30 @@ class Entries extends BaseController {
     ));
   }
 
+  function requireEntry($id, $editable = true) {
+    $this->entry = null;
+
+    $cu = $this->currentUser;
+    $entry = new Entry();
+    $entry->where('id', $id)->get();
+
+    if (!$editable) {
+      $this->entry = $entry;
+    } else {
+      $entry->user->get();
+      if ($cu && ($cu->is_admin || $cu->id == $entry->user->id)) {
+        $this->entry = $entry;
+      }
+    }
+
+    if (!$this->entry) {
+      $this->show_error('Entry not found');
+    }
+  }
+
   function index_csv($entries) {
     header('Content-type:text/csv');
-    $entries->order_by('_sort');
+    $entries->order_by('name');
     $entries = $entries->get();
 
     $this->load->view('entries/index_csv', array(
@@ -48,7 +52,7 @@ class Entries extends BaseController {
   function index_kml($entries) {
     header('Content-type:text/plain');
     $entries->where('geocode !=', '');
-    $entries->order_by('_sort');
+    $entries->order_by('name');
     $entries = $entries->get();
 
     $this->load->view('entries/index_kml', array(
@@ -65,10 +69,8 @@ class Entries extends BaseController {
     $format=isset($params['format']) ? $params['format'] : null;
 
     $entries = new Entry();
-    $entries->select("*, CONCAT(company,name) as _sort", false);
 
     if ($unq) {
-      $entries->like('company', $unq);
       $entries->or_like('name', $unq);
       $entries->or_like('description', $unq);
     }
@@ -81,7 +83,7 @@ class Entries extends BaseController {
       return $this->index_kml($entries);
     }
 
-    $entries->order_by('_sort');
+    $entries->order_by('name');
     $entries = $entries->get();
     $maplink = "http://maps.google.com/maps?q=".
       urlencode(site_url("/entries?format=kml&q=$q&ts=".time()));
@@ -93,43 +95,45 @@ class Entries extends BaseController {
   }
 
   function do_show($id) {
-    $entry = $this->currentEntry($id);
+    $this->requireEntry($id, false);
 
-    $this->template->write('title', $entry->displayName);
+    $this->template->write('title', $this->entry->name);
 
     $this->render(null, array(
-      'entry' => $entry
+      'entry' => $this->entry
     ));
   }
 
   function do_edit($id) {
     $params = queryParams();
-    $entry = $this->currentEntry($id);
-    $key = isset($params['key']) ? $params['key'] : null;
+    $this->requireEntry($id);
 
-    if ($entry->isAuthorized() || $key == $entry->editKey) {
+    if ($this->entry->canEdit($this->currentUser)) {
       $this->render(null, array(
-        'entry' => $entry
+        'entry' => $this->entry
       ));
     } else {
-      $flash = isset($_POST['auth']) ? 'Sorry, that\'s not the right password <img src="'.site_url('/static/images/face-sad.png').'" />' : null;
-      return $this->render('entries/login', array(
-        'flash' => $flash,
-        'entry' => $entry
-      ));
+      $this->flash('Login as the owner of this entry to edit it.');
+      $this->setReturnTo(url_to($this->entry, 'edit'));
+      redirect(url_to('users', 'login'));
     }
   }
 
   function do_new() {
-    $entry = new Entry();
+    if (!$this->currentUser) {
+      $this->flash("You must be logged in to create an entry.  ('Don't have an account? ".link_to("users", "new", "Create one")." - it's easy!)");
+      $this->setReturnTo(url_to('entries', 'new'));
+      return redirect(url_to('users', 'login'));
+    }
 
+    $entry = new Entry();
     $this->render('entries/edit', array(
       'entry' => $entry
     ));
   }
 
-  function applyFormToEntry($entry) {
-    $fields = explode(' ', "name company description email private_email url phone address password");
+  function applyForm($entry) {
+    $fields = explode(' ', "type name description email private_email url phone address password");
 
     foreach($fields as $field) {
       if (isset($_POST[$field])) {
@@ -138,7 +142,7 @@ class Entries extends BaseController {
       }
     }
 
-    if (isSpam($entry->displayName, $entry->email, $entry->description)) {
+    if (isSpam($entry->name, $entry->email, $entry->description)) {
       $this->template->write('content', 'Yuck, that really didn\'t taste very good!');
       $this->template->render();
       die();
@@ -156,32 +160,35 @@ class Entries extends BaseController {
   }
 
   function do_create() {
+    if (!$this->currentUser) {
+      $this->show_error("Not logged in", 401);
+    }
     $entry = new Entry();
 
-    // Record IP that created this record (for use in spam filtering)
+    // Record IP that created this record.  We don't currently do anything with 
+    // this, but it may prove useful later on
     $entry->created_ip = $_SERVER['REMOTE_ADDR'];
 
-    $this->applyFormToEntry($entry);
+    $this->applyForm($entry);
+
+    // Save relationship to current user
+    $rv = $entry->save($this->currentUser);
 
     redirect(url_to($entry, 'show'));
   }
 
   function do_update($id) {
-    $entry = $this->currentEntry($id);
+    $this->requireEntry($id);
 
-    $this->authCheck($entry);
-
-    $this->applyFormToEntry($entry);
-    redirect(url_to($entry, 'show'));
+    $this->applyForm($this->entry);
+    redirect(url_to($this->entry, 'show'));
   }
 
   function do_delete($id) {
-    $entry = $this->currentEntry($id);
-
-    $this->authCheck($entry);
+    $this->requireEntry($id);
     
-    $entry->setImage(null); // Remove image files
-    $entry->delete();
+    $this->entry->setImage(null); // Remove image files
+    $this->entry->delete();
     redirect(url_to('entries'));
   }
 
@@ -205,8 +212,8 @@ class Entries extends BaseController {
   }
 
   function do_geocode($id) {
-    $entry = $this->currentEntry($id);
-    $json = $entry->_geocode();
+    $this->requireEntry($id);
+    $json = $this->entry->_geocode();
     dump($json);
   }
 
@@ -220,15 +227,15 @@ class Entries extends BaseController {
       if (isset($params['state'])) {
         $entry->init();
         $entry->_geocode();
-        $entry->save(false);
-        $this->template->write('content', "Recached $entry->displayName<br />");
+        $entry->save(null, false);
+        $this->template->write('content', "Recached $entry->name<br />");
       }
 
       if (isset($params['thumb'])) {
         // Re-render thumbnails
         if ($entry->has_image) {
           $entry->renderThumb();
-          $this->template->write('content', "Recached thumbnail for $entry->displayName<br />");
+          $this->template->write('content', "Recached thumbnail for $entry->name<br />");
         }
       }
 
@@ -241,7 +248,7 @@ class Entries extends BaseController {
 
   function do_recover_password($id) {
     if (isPost()) {
-      $entry = $this->currentEntry($id);
+      $this->requireEntry($id);
       $entry->recoverPassword();
       redirect(url_to('entries', 'recover_password'));
     } else {
@@ -250,13 +257,11 @@ class Entries extends BaseController {
   }
 
   function do_comment($id) {
-    $entry = $this->currentEntry($id);
-    if (!$entry) {
-      show_404();
-    } else if (isPost()) {
+    $this->requireEntry($id, false);
+    if (isPost()) {
       $params = $_POST;
       $action = isset($params['action']) ? $params['action'] : '';
-      $comment = new Comment($entry->id, $action);
+      $comment = new Comment($this->entry->id, $action);
       $comment->body = isset($params['body']) ? $params['body'] : '';
       if (isSpam(null, null, $comment->body)) {
         $this->template->write('content', 'Yuck, that really didn\'t taste very good!');
@@ -265,6 +270,6 @@ class Entries extends BaseController {
       }
       $comment->save();
     }
-    redirect(url_to($entry, 'show'));
+    redirect(url_to($this->entry, 'show'));
   }
 }

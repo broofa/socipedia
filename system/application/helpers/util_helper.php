@@ -18,15 +18,20 @@ function stack() {
 function url_to($model='', $action=null, $params = null) {
   if ($model instanceof DataMapper) {
     $class = strtolower(plural(get_class($model)));
-    $path = $action ? "$class/$action/$model->id" : "$class/$model->id";
+    if (!$action) $action = 'show';
+    $path = "$class/$action/$model->id";
   } else if ($model) {
     $path = $action ? "$model/$action" : "$model";
   } else {
     $path = "/";
   }
-  if ($params) $path = "$path.?$params";
+  if ($params) $path = $path."?$params";
 
   return site_url($path);
+}
+
+function link_to($model='', $action=null, $text, $atts=null) {
+  return "<a href=\"".url_to($model, $action)."\"". ($atts ? " $atts" : "").">$text</a>";
 }
 
 function queryParams() {

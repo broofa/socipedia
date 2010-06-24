@@ -7,6 +7,7 @@
 </style>
 
 <form id="login_form" action="" method="POST">
+  <input type="hidden" value="<?= isset($return_to) ? $return_to : '' ?>" />
   <label>Email: <input name="email" type="text" /></label>
   <br />
   <label>Password: <input name="password" type="password" /></label>
