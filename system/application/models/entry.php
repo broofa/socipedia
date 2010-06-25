@@ -24,7 +24,7 @@ class Entry extends DataMapper {
     '__end__' => true
   );
 
-  function Entry() {
+  function __construct() {
     parent::__construct();
     $this->init();
   }
@@ -41,9 +41,9 @@ class Entry extends DataMapper {
       $stamp = strtotime($this->updated);
       return $stamp < $cutoff;
     } else if ($k == 'descriptionHtml') {
-      return hashlinks(linkify(htmlify(parent::__get('description'))));
+      return hashlinks(linkify(htmlify($this->description)));
     } else if ($k == 'descriptionSummary') {
-      return htmlify(substr_replace(parent::__get('description'), ' ...', 140), false);
+      return htmlify(substr_replace($this->description, ' ...', 140), false);
     } else if ($k == 'rssDate') {
       // TODO: Is there a better way to handle the timezone?  Mysql times are 
       // GMT and have to be parsed as such.
@@ -62,7 +62,7 @@ class Entry extends DataMapper {
       $k = 'auth';
       $v = $v ? self::hash_password($v, $this->salt) : null;
     }
-    parent::__set($k, $v);
+    $this->$k = $v;
   }
 
   function init() {

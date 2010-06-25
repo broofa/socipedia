@@ -1,5 +1,6 @@
 # Config files contain sensitive data - make sure they don't get checked in
 app_config.php
+dmz
 
 # Ignore uploads content
 static/uploads

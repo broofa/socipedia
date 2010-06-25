@@ -54,7 +54,6 @@ class Entries extends BaseController {
     $entries->where('geocode !=', '');
     $entries->order_by('name');
     $entries = $entries->get();
-
     $this->load->view('entries/index_kml', array(
       'entries' => $entries
     ));
@@ -71,8 +70,10 @@ class Entries extends BaseController {
     $entries = new Entry();
 
     if ($unq) {
+      $entries->group_start();
       $entries->or_like('name', $unq);
       $entries->or_like('description', $unq);
+      $entries->group_end();
     }
 
     if ($format == 'rss') {

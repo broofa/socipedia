@@ -53,7 +53,6 @@ class User extends BaseModel {
       // Don't allow blank passwords to be set
       $k = 'salted_passwd';
       $v = $v ? self::hashPassword($v, $this->salt) : null;
-dump("$k -> '$v'");
     }
     parent::__set($k, $v);
   }

@@ -26,6 +26,14 @@ abstract class BaseModel extends DataMapper {
     parent::delete();
   }
 
+  function __get($k) {
+    return parent::__get($k);
+  }
+
+  function __set($k, $v) {
+    $this->$k = $v;
+  }
+
   /*
   function save($object='', $log = true) {
     $action = $this->id ? 'updated' : 'inserted';
@@ -40,4 +48,3 @@ abstract class BaseModel extends DataMapper {
      */
 }
 ?>
-

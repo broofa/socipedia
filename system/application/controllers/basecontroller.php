@@ -4,7 +4,7 @@ abstract class BaseController extends Controller {
     parent::__construct();	
 
     $uid = $this->session->userdata('user');
-    $this->currentUser = User::find('id', $uid);
+    $this->currentUser = new User(); //User::find('id', $uid);
 
     $vars = array(
       'currentUser' => $this->currentUser

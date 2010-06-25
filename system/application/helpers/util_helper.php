@@ -4,9 +4,22 @@ include "app_config.php";
 define('TAG_REGEX', '/(?:\s#)([a-zA-Z][\w-]*)/');
 
 function dump($o) {
-  echo "<h3>dump</h3><pre>";
+  echo "<h3>dump</h3>\n<pre>\n";
   print_r($o);
-  echo "</pre>";
+  echo "\n</pre>\n";
+}
+
+$marks = array();
+function mark($s) {
+  global $marks;
+  $marks[$s] = isset($marks[$s]) ? ($marks[$s] += 1) : 0;
+  echo "$s ".$marks[$s]."\n";
+}
+
+function unmark($s) {
+  global $marks;
+  unset($marks[$s]);
+  echo "$s end\n";
 }
 
 function stack() {

@@ -108,7 +108,7 @@ $autoload['language'] = array();
 |
 */
 
-$autoload['model'] = array('Entry');
+$autoload['model'] = array();
 
 
 
