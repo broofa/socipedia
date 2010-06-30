@@ -28,6 +28,20 @@ function stack() {
   echo "</pre>";
 }
 
+function modelFind($c, $k, $v) {
+  $o = new $c();
+  $o->get_where(array($k => $v));
+  return $o->id ? $o : null;
+}
+
+
+function redirect_back($url='') {
+  if (isset($_SERVER['HTTP_REFERER'])) {
+    redirect($_SERVER['HTTP_REFERER']);
+  }
+  redirect($url);
+}
+
 function url_to($model='', $action=null, $params = null) {
   if ($model instanceof DataMapper) {
     $class = strtolower(plural(get_class($model)));
@@ -48,8 +62,25 @@ function link_to($model='', $action=null, $text, $atts=null) {
 }
 
 function queryParams() {
-  parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $params);
+  if (isset($GLOBALS['__query'])) {
+    $params = $GLOBALS['__query'];
+  } else {
+    parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $params);
+  }
+
   return $params;
+}
+
+function param($name, $default='', $trim=true) {
+  $p = queryParams();
+  if (!isset($p->$name)) {
+    if (isPost()) {
+      $p = $_POST;
+    } else {
+      return $default;
+    }
+  }
+  return isset($p[$name]) ? ($trim ? trim($p[$name]) : $p[name]) : $default;
 }
 
 function isGet() {return $_SERVER['REQUEST_METHOD'] == 'GET';}
@@ -59,7 +90,7 @@ function isDelete() {return $_SERVER['REQUEST_METHOD'] == 'DELETE';}
 function isHead() {return $_SERVER['REQUEST_METHOD'] == 'HEAD';}
 
 function cleer() {
-  echo '<div class="cleer"></div>';
+  return '<div class="cleer"></div>';
 }
 
 function hashquery($s) {

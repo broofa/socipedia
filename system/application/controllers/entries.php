@@ -22,8 +22,7 @@ class Entries extends BaseController {
     $this->entry = null;
 
     $cu = $this->currentUser;
-    $entry = new Entry();
-    $entry->where('id', $id)->get();
+    $entry = modelFind('Entry', 'id', $id);
 
     if (!$editable) {
       $this->entry = $entry;
@@ -61,11 +60,10 @@ class Entries extends BaseController {
 
   function do_index() {
     $view = null;
-    $params = queryParams();
 
-    $q=isset($params['q']) ? $params['q'] : null;
+    $q= param('q', null);
     $unq=hashunquery($q);
-    $format=isset($params['format']) ? $params['format'] : null;
+    $format= param('format', null);
 
     $entries = new Entry();
 
@@ -97,11 +95,19 @@ class Entries extends BaseController {
 
   function do_show($id) {
     $this->requireEntry($id, false);
+    $this->entry->user->get();
+
+    $comments = $this->entry->comment;
+    $comments->order_by('created');
+    $comments->limit(10);
+    $comments->get();
+    $cmarkup = $this->load->view('comments/_list', array('comments' => $comments->all, 'edit_ui' => true), true);
 
     $this->template->write('title', $this->entry->name);
 
     $this->render(null, array(
-      'entry' => $this->entry
+      'entry' => $this->entry,
+      'cmarkup' => $cmarkup
     ));
   }
 
@@ -110,6 +116,7 @@ class Entries extends BaseController {
     $this->requireEntry($id);
 
     if ($this->entry->canEdit($this->currentUser)) {
+      $this->entry->user->get();
       $this->render(null, array(
         'entry' => $this->entry
       ));
@@ -122,7 +129,7 @@ class Entries extends BaseController {
 
   function do_new() {
     if (!$this->currentUser) {
-      $this->flash("You must be logged in to create an entry.  ('Don't have an account? ".link_to("users", "new", "Create one")." - it's easy!)");
+      $this->flash("You must be logged in to create an entry.<br />(don't have an account? ".link_to("users", "new", "create one")." - it's easy)");
       $this->setReturnTo(url_to('entries', 'new'));
       return redirect(url_to('users', 'login'));
     }
@@ -133,13 +140,17 @@ class Entries extends BaseController {
     ));
   }
 
-  function applyForm($entry) {
+  function applyForm($entry, $owner = null) {
     $fields = explode(' ', "type name description email private_email url phone address password");
 
     foreach($fields as $field) {
-      if (isset($_POST[$field])) {
-        $value = trim($_POST[$field]);
-        $entry->$field = $value;
+      $entry->$field = trim(param($field, $entry->$field));
+    }
+
+    if ($this->currentUser->is_admin) {
+      if (is_numeric(param('owner_id'))) {
+        $new_owner = modelFind('User', 'id', param('owner_id'));
+        if ($new_owner->id) $owner = $new_owner;
       }
     }
 
@@ -149,7 +160,7 @@ class Entries extends BaseController {
       die();
     }
 
-    $entry->save();
+    $entry->save($owner);
 
     // Do this after entry save since we need to know the entry ID
     if (isset($_FILES['image'])) {
@@ -161,36 +172,40 @@ class Entries extends BaseController {
   }
 
   function do_create() {
-    if (!$this->currentUser) {
-      $this->show_error("Not logged in", 401);
+    if (isPost()) {
+      if (!$this->currentUser) {
+        $this->show_error("Not logged in", 401);
+      }
+      $entry = new Entry();
+
+      // Record IP that created this record.  We don't currently do anything with 
+      // this, but it may prove useful later on
+      $entry->created_ip = $_SERVER['REMOTE_ADDR'];
+
+      $this->applyForm($entry, $this->currentUser);
+
+      redirect(url_to($entry, 'show'));
     }
-    $entry = new Entry();
-
-    // Record IP that created this record.  We don't currently do anything with 
-    // this, but it may prove useful later on
-    $entry->created_ip = $_SERVER['REMOTE_ADDR'];
-
-    $this->applyForm($entry);
-
-    // Save relationship to current user
-    $rv = $entry->save($this->currentUser);
-
-    redirect(url_to($entry, 'show'));
   }
 
   function do_update($id) {
-    $this->requireEntry($id);
+    if (isPost()) {
+      $this->requireEntry($id);
 
-    $this->applyForm($this->entry);
-    redirect(url_to($this->entry, 'show'));
+      $this->applyForm($this->entry);
+
+      redirect(url_to($this->entry, 'show'));
+    }
   }
 
   function do_delete($id) {
-    $this->requireEntry($id);
-    
-    $this->entry->setImage(null); // Remove image files
-    $this->entry->delete();
-    redirect(url_to('entries'));
+    if (isPost()) {
+      $this->requireEntry($id);
+
+      $this->entry->setImage(null); // Remove image files
+      $this->entry->delete();
+      redirect(url_to('entries'));
+    }
   }
 
   function do_tags() {
@@ -219,20 +234,18 @@ class Entries extends BaseController {
   }
 
   function do_recache() {
-    $params = queryParams();
-
     $entries = new Entry();
     $entries = $entries->get();
 
     foreach ($entries->all as $entry) {
-      if (isset($params['state'])) {
+      if (param('state')) {
         $entry->init();
         $entry->_geocode();
         $entry->save(null, false);
         $this->template->write('content', "Recached $entry->name<br />");
       }
 
-      if (isset($params['thumb'])) {
+      if (param('thumb')) {
         // Re-render thumbnails
         if ($entry->has_image) {
           $entry->renderThumb();
@@ -260,17 +273,26 @@ class Entries extends BaseController {
   function do_comment($id) {
     $this->requireEntry($id, false);
     if (isPost()) {
-      $params = $_POST;
-      $action = isset($params['action']) ? $params['action'] : '';
-      $comment = new Comment($this->entry->id, $action);
-      $comment->body = isset($params['body']) ? $params['body'] : '';
+      $comment = new Comment();
+      $comment->name = param('name');
+      $comment->email = param('email');
+      $comment->body = param('body');
+      $comment->action = param('action');
       if (isSpam(null, null, $comment->body)) {
         $this->template->write('content', 'Yuck, that really didn\'t taste very good!');
         $this->template->render();
         die();
       }
-      $comment->save();
+      // Gather up relationships to save
+      $rels = array($this->entry);
+      if ($this->currentUser) {
+        $rels[] = $this->currentUser;
+      }
+
+      // Save the entry
+      $comment->save($rels);
     }
+
     redirect(url_to($this->entry, 'show'));
   }
 }

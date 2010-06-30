@@ -60,19 +60,31 @@ dd {
   font-size: 10pt;
   clear: right;
 }
+.sidebar .owner {
+  font-size: 10px;
+  opacity: .7;
+  text-align: center;
+  margin-top: 20px;
+}
 </style>
 
-<? if ($entry->canEdit($currentUser)) { ?>
   <div class="sidebar">
-    <script>
-    function confirmDelete() {
-      return confirm('Are you sure?  This can not be undone.\nTo permanently delete this entry, click "OK"');
-    }
-    </script>
-    <?= link_to($entry, 'edit', 'edit', 'class="button"') ?>
-    <?= link_to($entry, 'delete', 'delete', 'class="button" onclick="return confirmDelete()"') ?>
+    <? if ($entry->canEdit($currentUser)) { ?>
+        <script>
+        function confirmDelete() {
+          if (confirm('Are you sure?  This can not be undone.\nTo permanently delete this entry, click "OK"')) {
+            postTo('<?= url_to($entry, 'delete') ?>');
+          }
+        }
+        </script>
+        <?= link_to($entry, 'edit', 'edit', 'class="button"') ?>
+        <a href="#" class="button" onclick="return confirmDelete()">delete</a>
+    <? } ?>
+    <? if ($entry->user->id) { ?>
+      <p class="owner">(entry by <?= link_to($entry->user, 'show', $entry->user->html_name) ?>)</p>
+    <? } ?>
   </div>
-<? } ?>
+
 <? if (false && $entry->geocode) { ?>
   <div id="map">
     <iframe
@@ -98,7 +110,7 @@ dd {
 <? } ?>
 
 <h2 class="<?= $entry->stale ? "stale" : "" ?>">
-  <?= $entry->name ?>
+<?= $entry->html_name ?>
 </h2>
 
 <div class="description">
@@ -117,45 +129,55 @@ dd {
   <? } ?>
   <? if ($entry->phone) { ?>
     <dt class="label">phone</dt>
-    <dd class="phone"><?= htmlify($entry->phone) ?></dd>
+    <dd class="phone"><?= $entry->html_phone ?></dd>
   <? } ?>
   <? if ($entry->address) { ?>
     <dt class="label">address
     </dt>
     <dd class="address">
-    <a href="http://maps.google.com/maps?q=<?= urlencode($entry->address) ?>"><?= htmlify($entry->address) ?></a>
+    <a href="http://maps.google.com/maps?q=<?= urlencode($entry->address) ?>"><?= $entry->html_address ?></a>
 </dd>
   <? } ?>
 </dl>
 
-<?
-$comments = $entry->getComments()->all;
-if (count($comments) > 0) {
-?>
-  <h3>Comments</h3>
-  <ul id="comments">
-    <? foreach ($comments as $comment) { ?>
-      <li class="comment"><span class="created"><?= $comment->created ?></span></span><span class="body"><?= linkify(htmlify($comment->body)) ?></span><span class="action"><?= $comment->action ? " ($comment->action)" : ''?></li>
-    <? } ?>
-  </ul>
+<? if ($entry->comment->count() > 0) { ?>
+<h3>Comments</h3>
+<?= $cmarkup; ?>
 <? } ?>
+
 <p style="font-weight: bold">Add a comment / request action for this entry</p>
-<form id="comment_ui" style="margin-bottom: 15px;" action="<?= url_to($entry, 'comment') ?>" method="POST">
-  <textarea name="body" style="width: 400px; height: 80px"></textarea><br />
+
+<form id="comment_ui" class="basic_form" action="<?= url_to($entry, 'comment') ?>" method="POST">
+  <? if (!$currentUser) { ?>
+    <div class="label">Name</div>
+    <input name="name" type="text" value="" />
+    <?= cleer() ?>
+
+    <div class="label">Email</div>
+    <input name="email" type="text" value="" />
+    <?= cleer() ?>
+  <? } ?>
+
+  <div class="label">Comment</div>
+  <textarea name="body" style="width: 400px; height: 80px"></textarea>
+  <?= cleer() ?>
+
   <select name="action">
     <option value="" selected>Requested action ...</option>
     <option value="">None - 'just leaving a comment</option>
     <option value="update">Update - this needs some attention</option>
     <option value="delete">Remove - this should be deleted</option>
-    <option value="claim">Claim - this should belong to me</option>
+    <option value="claim">Claim - I'd like to be responsible for this</option>
     <option value="other">Other - see comment for details</option>
   </select>
+
   <input style="margin-left: 40px;" type="submit" value="Submit" />
 </form>
 
 <p id="footer">
 updated: <?= $entry->updated ?>
 <? if ($entry->geocode) { ?>
-  &bull; geocode: <?= htmlify($entry->geocode) ?>
+  &bull; geocode: <?= $entry->html_geocode ?>
 <? } ?>
+
 </p>

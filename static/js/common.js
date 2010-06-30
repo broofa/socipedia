@@ -1,3 +1,9 @@
+function postTo($url) {
+  var form = $('<form id="autoform" action="' + $url + '" method="POST" style="display: none"></form>');
+  $(document.body).append(form);
+  $('#autoform')[0].submit();
+}
+
 /**
  * Configure all links that go off-site to open in a new window
  */

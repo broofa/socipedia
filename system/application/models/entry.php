@@ -1,8 +1,9 @@
 <?
 define('CONVERT_CMD', '/usr/bin/convert -flatten SRC -background white -thumbnail "SIZE" DST');
 
-class Entry extends DataMapper {
+class Entry extends BaseModel {
   var $has_one = array('user');
+  var $has_many = array('comment');
 
   var $validation = array(
     array(
@@ -75,14 +76,6 @@ class Entry extends DataMapper {
     }
   }
 
-  function getComments() {
-    $comments = new Comment();
-    $comments->where('entry_id', $this->id);
-    $comments->order_by('created');
-    $comments->get();
-    return $comments;
-  }
-
   function delete() {
     $activity = new Activity($this->id);
     $name = $this->name;
@@ -122,23 +115,6 @@ class Entry extends DataMapper {
       if ($this->user && $this->user->id == $user->id) return true;
     }
     return false;
-  }
-
-  public function isAuthorized($passwd = null) {
-    // No auth set == no password required
-    if (!$this->auth) return true;
-
-    // Pull password from POST field?
-    if (!$passwd && isset($_POST['auth'])) {
-      $passwd = $_POST['auth'];
-    }
-
-    // Compute auth token
-    $hash = self::hash_password($passwd, $this->salt);
-    $mhash = self::hash_password($passwd);
-
-    return $passwd == $this->auth || $hash == $this->auth ||
-      $passwd == BARD_MASTER_HASH || $mhash == BARD_MASTER_HASH ;
   }
 
   public function imageURL() {

@@ -1,6 +1,6 @@
 <?
 class User extends BaseModel {
-  var $has_many = array('entry');
+  var $has_many = array('entry', 'comment');
 
   var $validation = array(
     array(
@@ -9,7 +9,7 @@ class User extends BaseModel {
       'rules' => array('required', 'valid_email')
     ),
     array(
-      'field' => 'display_name',
+      'field' => 'name',
       'label' => 'name',
       'rules' => array('required')
     ),
@@ -20,7 +20,7 @@ class User extends BaseModel {
     )
   );
 
-  function User() {
+  function __construct() {
     parent::__construct();
 
     // Initialize once-only fields
@@ -35,15 +35,9 @@ class User extends BaseModel {
     return substr(hash_hmac('sha512', $password . $nonce, BARD_SITE_KEY), 0, 128);
   }
 
-  static public function find($k, $v) {
-    $user = new User();
-    $user->get_where(array($k => $v));
-    return $user->id ? $user : null;
-  }
-
   function __get($k) {
     if ($k == 'logName') {
-      return $this->display_name;
+      return $this->name;
     }
     return parent::__get($k);
   }

@@ -3,7 +3,7 @@
 <?
 foreach ($users->all as $user) {
 ?>
-  <li><a href="<?= url_to($user, 'show') ?>"><?= $user->display_name ?></a></li>
+  <li><a href="<?= url_to($user, 'show') ?>"><?= $user->html_name ?></a></li>
 <?
 }
 ?>

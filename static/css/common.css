@@ -12,45 +12,6 @@ P {
 }
 A {color: #069; text-decoration: none;}
 A:hover { color: #900; }
-A.button {
-  margin: 0px 5px;
-  padding: 2px 8px;
-  min-width: 80px;
-  border: solid 1px #ccc;
-  background-color: #fff;
-  border-radius: 10px;
-  -moz-border-radius: 10px;
-  -webkit-border-radius: 10px;
-}
-A.button.left_cap {
-  margin-right: 0px;
-  border-radius: 10px 0px 0px 10px;
-  -moz-border-radius: 10px 0px 0px 10px;
-  -webkit-border-radius: 10px 0px 0px 10px;
-  border-right:  none;
-}
-A.button.right_cap {
-  margin-left: 0px;
-  border-radius: 0px 10px 10px 0px;
-  -moz-border-radius: 0px 10px 10px 0px;
-  -webkit-border-radius: 0px 10px 10px 0px;
-}
-A.button.no_cap {
-  margin-right: 0px;
-  margin-left: 0px;
-  border-radius: 0px;
-  -moz-border-radius: 0px;
-  -webkit-border-radius: 0px;
-  border-right:  none;
-}
-A.button:hover {
-  position:relative;
-  top: -1px;
-  left: -1px;
-  box-shadow: 2px 2px 2px rgba(0,0,0,.5);
-  -moz-box-shadow: 2px 2px 2px rgba(0,0,0,.5);
-  -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,.5);
-}
 INPUT[type="text"], INPUT[type="password"], TEXTAREA {
   border: solid 1px #666;
   border-radius: 4px;
@@ -66,7 +27,7 @@ INPUT[type="text"], INPUT[type="password"], TEXTAREA {
   position: relative;
 }
 
-#banner, #content {
+#header, #content {
   border-radius: 10px;
   -moz-border-radius: 10px;
   -webkit-border-radius: 10px;
@@ -75,43 +36,56 @@ INPUT[type="text"], INPUT[type="password"], TEXTAREA {
   -webkit-box-shadow: 4px 4px 2px rgba(0,0,0,.5);
 }
 
-#banner {
-  /* background: url(http://farm4.static.flickr.com/3312/3441523543_e42ae65a2b_b.jpg) center -190px; */
-  /* background: url(http://farm3.static.flickr.com/2440/3588629512_49c26e2215_b.jpg) -200px -250px; */
-  background: url(../images/banner_bg.jpg) no-repeat center bottom;
-  background-repeat: no-repeat;
-  background-color: #eee;
-
-  color: #fff;
-  text-shadow: 2px 2px 4px #000;
-
-  margin: 10px 0px 0px;
-  text-align: center;
-  line-height: 80px;
+#header {
+  position: relative;
+  background: #fff url(../images/banner_bg.jpg) no-repeat 0px -20px;
   border-bottom-left-radius: 0px;
   border-bottom-right-radius: 0px;
   -moz-border-radius-bottomleft: 0px;
   -moz-border-radius-bottomright: 0px;
   -webkit-border-bottom-left-radius: 0px;
   -webkit-border-bottom-right-radius: 0px;
+  height: 80px;
+}
+
+#banner {
+  color: #000;
+  color: rgba(255,255,255,.4);
+  text-shadow: -1px -1px 1px rgba(0,0,0,.25);
+  font-size: 30px;
+  line-height: 60px;
+
+  text-align: center;
 }
 
 #session_controls {
   position: absolute;
   top: 0px;
   right: 0px;
-  padding: 2px 10px;
+  padding: 1px 5px;
 }
+
 #session_controls a {
   margin-right: 10px;
 }
 
 #navbar {
   position: absolute;
-  top: 70px;
-  z-index: 1;
-  text-align: center;
-  width: 100%;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  height: 22px;
+  line-height: 22px;
+  padding: 0px 20px;
+  background-color: rgba(255,255,255,.2);
+
+  border-radius: 0px;
+  -moz-border-radius: 0px;
+  -webkit-border-radius: 0px;
+}
+
+#navbar a {
+  margin-left: 10px;
 }
 
 #navbar FORM, #navbar INPUT {
@@ -119,29 +93,38 @@ INPUT[type="text"], INPUT[type="password"], TEXTAREA {
   margin: 0px;
   display: inline-block;
 }
-#navbar FORM INPUT {
-  font-size: 12px;
-  padding: 2px 2px 2px 20px;
+#navbar #q {
+  position: absolute;
+  right: 6px;
+  top: 3px;
+  padding: 2px;
+  padding-right: 20px;
   margin: 0px;
   width: 100px;
+  border: none;
   border-radius: 10px;
   -moz-border-radius: 10px;
   -webkit-border-radius: 10px;
-  border: solid 1px #ccc;
-  background: url(https://webapp.mis.vanderbilt.edu/more/images/search.png) 4px no-repeat #fff;
+  background: #fff url(https://webapp.mis.vanderbilt.edu/more/images/search.png) 95% 2px no-repeat;
+  -moz-box-shadow: inset 1px 1px 1px rgba(0,0,0,.3);
+  -webkit-box-shadow: inset 1px 1px 1px rgba(0,0,0,.3);
 }
 
 #flash {
+  padding: 5px;
+  margin: 5px 50px;
   text-align: center;
   color: #630;
-  border: dashed 1px #ccc;
-  border-width: 1px 0px;
+  background-color: #eee;
+  border-radius: 8px;
+  -moz-border-radius: 8px;
+  -webkit-border-radius: 8px;
 }
 
 #content  {
   position: relative;
-  z-index: 0;
   padding: 10px;
+  padding-right: 200px;
   background-color: #fff;
   border-top-left-radius: 0px;
   border-top-right-radius: 0px;
@@ -152,21 +135,57 @@ INPUT[type="text"], INPUT[type="password"], TEXTAREA {
 }
 
 .sidebar {
-  background-color: #fff;
-  float:right;
-  padding: 6px;
-  margin: 10px 0px 10px 10px;
-  border:solid 2px #888;
-  width:150px;
-  border-radius: 8px;
-  -moz-border-radius: 8px;
-  -webkit-border-radius: 8px;
+  position: absolute;
+  right: 10px;
+  top: 0px;
+  width:170px;
+  padding: 10px 0px 20px 10px;
+  border-left: solid 1px #eee;
 }
 
-.sidebar A {
-  text-align: center;
+.sidebar .button {
   display: block;
-  margin: 4px 0px;
+  text-align: center;
+  margin: 2px 10px 5px;;
+  padding: 2px 8px;
+  min-width: 80px;
+  border: solid 1px #ccc;
+  background-color: #fff;
+  border-radius: 10px;
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+}
+.sidebar .button.left_cap {
+  margin-right: 0px;
+  border-radius: 10px 0px 0px 10px;
+  -moz-border-radius: 10px 0px 0px 10px;
+  -webkit-border-radius: 10px 0px 0px 10px;
+  border-right:  none;
+}
+.sidebar .button.right_cap {
+  margin-left: 0px;
+  border-radius: 0px 10px 10px 0px;
+  -moz-border-radius: 0px 10px 10px 0px;
+  -webkit-border-radius: 0px 10px 10px 0px;
+}
+.sidebar .button.no_cap {
+  margin-right: 0px;
+  margin-left: 0px;
+  border-radius: 0px;
+  -moz-border-radius: 0px;
+  -webkit-border-radius: 0px;
+  border-right:  none;
+}
+.sidebar .button:hover {
+  position:relative;
+  top: -1px;
+  left: -1px;
+  box-shadow: 2px 2px 2px rgba(0,0,0,.5);
+  -moz-box-shadow: 2px 2px 2px rgba(0,0,0,.5);
+  -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,.5);
+}
+.sidebar P {
+  margin: .5em;
 }
 
 .message.warn {
@@ -174,12 +193,48 @@ INPUT[type="text"], INPUT[type="password"], TEXTAREA {
 }
 
 .stale {
-  background: url(../../static/images/stale.png) no-repeat right center;
+  background: url(../images/stale.png) no-repeat right center;
 }
 
+/* basic form layout */
+.basic_form {
+  padding-left: 130px;
+}
+.basic_form > .cleer {
+  height: 15px;
+}
+.basic_form .label {
+  text-align:right;
+  white-space: nowrap;
+  float:left;
+  width:120px;
+  margin-left: -130px;
+}
+.basic_form .required {
+  width: 104px;
+  padding: 2px 0px 2px 16px;
+  padding-left: 16px;
+  background: url(../images/required.png) no-repeat left 2px;
+}
+.basic_form .hint {
+  color: #642;
+  font-size:10px;
+  display:block;
+  width: 400px;
+  padding-top:2px;
+}
+.basic_form INPUT.wide {
+  width: 250px;
+}
+.basic_form TEXTAREA {
+  width: 320px;
+}
+
+
+
 #footer {
-  font-size: 10px;
+  opacity: .7;
   text-align: center;
-  margin-top: 10px;
+  margin: 20px 0px;
 }
 

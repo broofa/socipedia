@@ -3,13 +3,10 @@ UL {
   list-style: none;
   margin: 0px;
   padding: 0px;
-  margin-right: 200px;
 }
 .entry {
   position: relative;
-  margin-top: 8px;
-  margin-left: 52px;
-  padding-right: 18px;
+  padding: 4px 18px 4px 52px;
 }
 .entry a {
   color: #333;
@@ -60,8 +57,8 @@ text-decoration: underline;
 }
 </style>
 
-<div class="sidebar" style="position: absolute; right: 10px; top: 10px;">
-  <p>Get this search as a &hellip;</p>
+<div class="sidebar">
+  Get this search as a &hellip;
   <a class="button" href="<?= $entries->url('rss', $q) ?>">RSS Feed</a>
   <a class="button" href="<?= $entries->url('csv', $q) ?>">CSV File</a>
   <a class="button" href="<?= $entries->url('map', $q) ?>">Google Map</a>
@@ -111,7 +108,7 @@ foreach($chars as $char) {
     <a href="<?= url_to($entry) ?>">
       <div class="name"><?= $dn ?></div>
       <div class="summary"><?= $entry->descriptionSummary ?></div>
-      <? cleer() ?>
+      <?= cleer() ?>
     </a>
     </li>
   <? } ?>

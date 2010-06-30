@@ -8,7 +8,7 @@ class Users extends BaseController {
 
   function requireUser($id, $editable = true) {
     $cu = $this->currentUser;
-    $user = User::find('id', $id);
+    $user = modelFind('User', 'id', $id);
     $this->user = null;
 
     if (!$editable || ($cu && ($cu->is_admin || $cu->id == $user->id))) {
@@ -23,21 +23,32 @@ class Users extends BaseController {
   function do_show($id) {
     $this->requireUser($id, false);
 
-    $this->render(null, array('user' => $this->user));
+    $comments = $this->user->comment;
+    $comments->order_by('created');
+    $comments->limit(10);
+    $comments->get();
+    $cmarkup = $this->load->view('comments/_list', array('comments' => $comments->all), true);
+
+    $this->render(null, array('user' => $this->user, 'cmarkup' => $cmarkup));
   }
 
   function do_index() {
     $users = new User();
-    $users->order_by('display_name');
+    $users->order_by('name');
     $users->get();
     $this->render(null, array('users' => $users));
   }
 
   function applyForm($user) {
-    $user->email = trim($_POST['email']);
-    $user->display_name = trim($_POST['display_name']);
-    $passwd = trim($_POST['password']);
+    $user->email = param('email');
+    $user->name = param('name');
+    $passwd = param('password');
     if ($passwd) $user->password = $passwd;
+
+    $cu = $this->currentUser;
+    if ($cu->is_admin && $cu->id != $user->id) {
+      $user->is_admin = param('is_admin', 0);
+    }
   }
 
   function do_edit($id) {
@@ -64,9 +75,9 @@ class Users extends BaseController {
 
   function do_create() {
     if (isPost()) {
-      $user = User::find('email', $_POST['email']);
+      $user = modelFind('User', 'email', param('email'));
       if ($user) {
-        $this->flash('An account for "'.$_POST['email'].'" has already exists.  You may either create an account using a different email address or login to the existing account.');
+        $this->flash('An account for "'.param('email').'" has already exists.  You may either create an account using a different email address or login to the existing account.');
         redirect(url_to('users', 'new'));
       } else {
         $user = new User();
@@ -88,8 +99,8 @@ class Users extends BaseController {
     if (isGet()) {
       $this->render();
     } else if (isPost()) {
-      $user = User::find('email', $_POST['email']);
-      if ($user->isPassword($_POST['password'])) {
+      $user = modelFind('User', 'email', param('email'));
+      if ($user->isPassword(param('password'))) {
         $this->session->set_userdata('user', $user->id);
 
         $this->returnTo(url_to($user));
@@ -102,7 +113,8 @@ class Users extends BaseController {
 
   function do_logout() {
     $this->session->sess_destroy();
-    redirect(url_to());
+    
+    redirect_back(url_to());
   }
 
   function recover_password($id) {

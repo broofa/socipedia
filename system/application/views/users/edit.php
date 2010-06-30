@@ -14,7 +14,7 @@
   padding-top:2px;
 }
 </style>
-  <h2><?= $user->id ? "Settings for $user->display_name" : "Create New Account" ?></h2>
+  <h2><?= $user->id ? "Settings for $user->html_hame" : "Create New Account" ?></h2>
 <p>
 </p>
 <form id="entry_form" method="POST" action="<?= $user->id ? url_to($user, 'update') : url_to('users', 'create') ?>">
@@ -25,7 +25,7 @@
   </label>
   <label>
     Name 
-    <input name="display_name" type="text" value="<?= $user->display_name ?>" />
+    <input name="name" type="text" value="<?= $user->html_name ?>" />
     <div class="hint">public name shown to other users</div> 
   </label>
   <label>
@@ -35,5 +35,12 @@
       <div class="hint">leave blank to keep current password</div> 
     <? } ?>
   </label>
+  <? if ($currentUser->is_admin) { ?>
+    <label>
+      Administrator?
+      <input name="is_admin" type="checkbox" <?= $user->id == $currentUser->id ? "disabled" : "" ?> <?= $user->is_admin ? 'checked' : "" ?> style="margin-right: 112px;"/>
+    </label>
+  <? } ?>
+
   <input type="submit" value="<?= $user-> id ? "Update" : "Create Account" ?>" />
 </form>

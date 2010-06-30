@@ -1,20 +1,13 @@
 <?
-class Comment extends DataMapper {
-  function Comment($entry_id=null, $action='') {
-    parent::__construct();
-    $this->entry_id = $entry_id;
-    $this->action = $action;
-  }
+class Comment extends BaseModel {
+  var $has_one = array('user', 'entry');
 
-  function save($log = true) {
-    parent::save();
-
-    if ($log) {
-      $activity = new Activity($this->entry_id);
-      $activity->summary = "Comment on entry \"$this->entry_id\"".($this->action ? " (action=$this->action)" : '');
-      $activity->body = $this->body;
-      $activity->save();
+  function __get($k) {
+    if ($k == 'friendly_created') {
+      $ts = strtotime($this->created);
+      return strftime('%b %e, %Y - %H:%M%P', $ts);
     }
+    return parent::__get($k);
   }
 }
 ?>

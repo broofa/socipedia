@@ -27,6 +27,10 @@ abstract class BaseModel extends DataMapper {
   }
 
   function __get($k) {
+    if (strpos($k, 'html_') === 0) {
+      $k = substr($k, 5);
+      return htmlify($this->$k);
+    }
     return parent::__get($k);
   }
 

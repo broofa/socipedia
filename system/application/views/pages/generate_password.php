@@ -1,7 +1,6 @@
 <?
-$q = queryParams();
-if (isset($_POST['string'])) {
-  $hash = Entry::hash_password($_POST['string']);
+if (param('string')) {
+  $hash = Entry::hash_password(param('string'));
 ?>
   <p>Here's your password hash:</p>
   <textarea cols=40 rows=4 onclick="this.select()"><?= $hash ?></textarea>
