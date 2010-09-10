@@ -35,7 +35,7 @@
       <div class="hint">leave blank to keep current password</div> 
     <? } ?>
   </label>
-  <? if ($currentUser->is_admin) { ?>
+  <? if ($currentUser && $currentUser->is_admin) { ?>
     <label>
       Administrator?
       <input name="is_admin" type="checkbox" <?= $user->id == $currentUser->id ? "disabled" : "" ?> <?= $user->is_admin ? 'checked' : "" ?> style="margin-right: 112px;"/>

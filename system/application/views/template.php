@@ -50,9 +50,9 @@
       </div>
 
       <div id="footer">
-        <?= anchor("/activities", 'activity') ?>
+        <?= link_to('activities', 'index', 'activity') ?>
         &bull;
-        <a href="http://github.com/broofa/socipedia">powered by socipedia</a>
+        powered by <a href="http://github.com/broofa/socipedia">socipedia</a>
         &bull;
         photo by <a href="http://www.flickr.com/photos/alyssssyla/3588629512/">alyssssyla</a>
       </div>

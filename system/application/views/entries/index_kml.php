@@ -7,7 +7,7 @@
       <description><![CDATA[
         <?= $entry->descriptionSummary ?>
         <br/>
-        <?= anchor('/entries/'.$entry->id, 'Click for details') ?>
+        <?= link_to($entry, 'show', 'Click for details') ?>
       ]]></description>
       <address>
         <?= htmlify($entry->address, false) ?>

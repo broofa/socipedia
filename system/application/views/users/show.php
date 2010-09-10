@@ -1,5 +1,7 @@
 <div class="sidebar">
-<?= link_to($user, 'edit', 'Account Settings ...', 'class="button"') ?>
+  <? if ($user->canEdit($currentUser)) {?>
+  <?= link_to($user, 'edit', 'Account Settings ...', 'class="button"') ?>
+  <? } ?>
 </div>
 
 <h2><?= $user->html_hame ?></h2>

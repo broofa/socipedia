@@ -18,26 +18,6 @@ class Entries extends BaseController {
     ));
   }
 
-  function requireEntry($id, $editable = true) {
-    $this->entry = null;
-
-    $cu = $this->currentUser;
-    $entry = modelFind('Entry', 'id', $id);
-
-    if (!$editable) {
-      $this->entry = $entry;
-    } else {
-      $entry->user->get();
-      if ($cu && ($cu->is_admin || $cu->id == $entry->user->id)) {
-        $this->entry = $entry;
-      }
-    }
-
-    if (!$this->entry) {
-      $this->show_error('Entry not found');
-    }
-  }
-
   function index_csv($entries) {
     header('Content-type:text/csv');
     $entries->order_by('name');
@@ -94,35 +74,41 @@ class Entries extends BaseController {
   }
 
   function do_show($id) {
-    $this->requireEntry($id, false);
-    $this->entry->user->get();
+    $entry = $this->get('Entry', $id);
 
-    $comments = $this->entry->comment;
+    $entry->user->get();
+
+    $comments = $entry->comment;
     $comments->order_by('created');
     $comments->limit(10);
     $comments->get();
-    $cmarkup = $this->load->view('comments/_list', array('comments' => $comments->all, 'edit_ui' => true), true);
+    $data = array(
+      'comments'=> $comments->all,
+      'edit_ui' => $entry->canEdit($this->currentUser)
+    );
+    $cmarkup = $this->load->view('comments/_list', $data, true);
 
-    $this->template->write('title', $this->entry->name);
+    $this->template->write('title', $entry->name);
 
     $this->render(null, array(
-      'entry' => $this->entry,
+      'entry' => $entry,
       'cmarkup' => $cmarkup
     ));
   }
 
   function do_edit($id) {
     $params = queryParams();
-    $this->requireEntry($id);
 
-    if ($this->entry->canEdit($this->currentUser)) {
-      $this->entry->user->get();
+    $entry = $this->getEditable('Entry', $id);
+
+    if ($entry->canEdit($this->currentUser)) {
+      $entry->user->get();
       $this->render(null, array(
-        'entry' => $this->entry
+        'entry' => $entry
       ));
     } else {
       $this->flash('Login as the owner of this entry to edit it.');
-      $this->setReturnTo(url_to($this->entry, 'edit'));
+      $this->setReturnTo(url_to($entry, 'edit'));
       redirect(url_to('users', 'login'));
     }
   }
@@ -166,7 +152,7 @@ class Entries extends BaseController {
     if (isset($_FILES['image'])) {
       if ($_FILES['image']['size'] > 0 && $_FILES['image']['size'] < 1000000) {
         $entry->setImage($_FILES['image']['tmp_name']);
-        $entry->save();
+        $entry->save(null, false);
       }
     }
   }
@@ -190,20 +176,20 @@ class Entries extends BaseController {
 
   function do_update($id) {
     if (isPost()) {
-      $this->requireEntry($id);
+      $entry = $this->getEditable('Entry', $id);
 
-      $this->applyForm($this->entry);
+      $this->applyForm($entry);
 
-      redirect(url_to($this->entry, 'show'));
+      redirect(url_to($entry, 'show'));
     }
   }
 
   function do_delete($id) {
     if (isPost()) {
-      $this->requireEntry($id);
+      $entry = $this->getEditable('Entry', $id);
 
-      $this->entry->setImage(null); // Remove image files
-      $this->entry->delete();
+      $entry->setImage(null); // Remove image files
+      $entry->delete();
       redirect(url_to('entries'));
     }
   }
@@ -215,8 +201,12 @@ class Entries extends BaseController {
     $tags = array();
     foreach ($entries->all as $entry) {
       preg_match_all(TAG_REGEX, $entry->description, $matches);
-      $matches = array_slice($matches, 0, 8);
-      foreach ($matches[0] as $match) {
+
+      // Limit to 8 tags per entry
+      $matches = array_slice($matches[1], 0, 8);
+
+      // process each tag
+      foreach ($matches as $match) {
         $match = strtolower($match);
         $tags[$match] = (isset($tags[$match]) ? $tags[$match] : 0) + 1;
       }
@@ -228,8 +218,9 @@ class Entries extends BaseController {
   }
 
   function do_geocode($id) {
-    $this->requireEntry($id);
-    $json = $this->entry->_geocode();
+    $entry = $this->getEditable('Entry', $id);
+
+    $json = $entry->_geocode();
     dump($json);
   }
 
@@ -262,7 +253,8 @@ class Entries extends BaseController {
 
   function do_recover_password($id) {
     if (isPost()) {
-      $this->requireEntry($id);
+      $entry = $this->getEditable('Entry', $id);
+
       $entry->recoverPassword();
       redirect(url_to('entries', 'recover_password'));
     } else {
@@ -271,7 +263,8 @@ class Entries extends BaseController {
   }
 
   function do_comment($id) {
-    $this->requireEntry($id, false);
+    $entry = $this->get('Entry', $id);
+
     if (isPost()) {
       $comment = new Comment();
       $comment->name = param('name');
@@ -279,12 +272,10 @@ class Entries extends BaseController {
       $comment->body = param('body');
       $comment->action = param('action');
       if (isSpam(null, null, $comment->body)) {
-        $this->template->write('content', 'Yuck, that really didn\'t taste very good!');
-        $this->template->render();
-        die();
+        $this->show_error('Yuck, that didn\'t taste very good!');
       }
       // Gather up relationships to save
-      $rels = array($this->entry);
+      $rels = array($entry);
       if ($this->currentUser) {
         $rels[] = $this->currentUser;
       }
@@ -293,6 +284,6 @@ class Entries extends BaseController {
       $comment->save($rels);
     }
 
-    redirect(url_to($this->entry, 'show'));
+    redirect(url_to($entry, 'show'));
   }
 }

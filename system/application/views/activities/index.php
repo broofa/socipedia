@@ -1,11 +1,6 @@
 <style>
-dl dt {
-  margin-top: 5px;
-  font-weight: bold;
-}
-dl dd {
-  font-size: 10px;
-  margin-left: 150px;
+ul {
+  list-style: none;
 }
 .updated {
   font-family: monospace;
@@ -14,14 +9,11 @@ dl dd {
 }
 </style>
 
-<dl>
+<ul>
   <? foreach($activities->all as $activity) { ?>
-    <dt>
-      <span class="updated"><?= $activity->updated ?></span>
-      <?= anchor('/entries/show/'.$activity->entry_id, $activity->summary); ?>
-    </dt>
-    <dd>
-      <?= htmlify($activity->body, true) ?>
-    </dd>
+    <li>
+      <span class="updated"><?= $activity->created ?></span>
+      <?= link_to($activity->target_class, "show/$activity->target_id", $activity->body); ?>
+    </li>
   <? } ?>
-</dl>
+</ul>

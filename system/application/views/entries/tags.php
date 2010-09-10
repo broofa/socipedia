@@ -2,7 +2,7 @@
 <?
 // Inspired by http://www.bytemycode.com/snippets/snippet/415/
 $font_min = 12;
-$font_max = 30;
+$font_max = 20;
 
 $count_min = min(array_values($tags));
 $count_max = max(array_values($tags));
@@ -14,7 +14,7 @@ sort($tag_names);
 foreach ($tag_names as $tag) {
   $count = $tags[$tag];
   $size = round($font_min + (($count - $count_min) * $step));
-  $url = '/entries/?q='.hashquery($tag);
+  $url = url_to('entries', 'index', 'q='.hashquery($tag));
 
   echo anchor($url, $tag." ", array(
     'title' => "$tag appears in $count entries",

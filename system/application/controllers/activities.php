@@ -9,14 +9,14 @@ class Activities extends BaseController {
   function do_index() {
     $MAX = 200;
     $activities = new Activity();
-    $activities->order_by('updated desc');
+    $activities->order_by('created desc');
     $activities->limit(100);
     $activities = $activities->get();
 
     // Keep number of records from growing unbounded
     if ($activities->count() > $MAX) {
       $toDelete = new Activity();
-      $toDelete->order_by('updated desc');
+      $toDelete->order_by('created desc');
       $toDelete->limit($MAX,$MAX/2);
       $toDelete->get();
       $toDelete->delete_all();

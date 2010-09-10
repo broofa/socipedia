@@ -6,30 +6,16 @@ class Users extends BaseController {
     parent::__construct();	
   }
 
-  function requireUser($id, $editable = true) {
-    $cu = $this->currentUser;
-    $user = modelFind('User', 'id', $id);
-    $this->user = null;
-
-    if (!$editable || ($cu && ($cu->is_admin || $cu->id == $user->id))) {
-      $this->user = $user;
-    }
-
-    if (!$this->user) {
-      $this->show_error('User not found');
-    }
-  }
-  
   function do_show($id) {
-    $this->requireUser($id, false);
+    $user = $this->get('User', $id);
 
-    $comments = $this->user->comment;
+    $comments = $user->comment;
     $comments->order_by('created');
     $comments->limit(10);
     $comments->get();
-    $cmarkup = $this->load->view('comments/_list', array('comments' => $comments->all), true);
+    $cmarkup = $this->load->view('comments/_list', array('comments' => $comments->all, 'edit_ui' => true), true);
 
-    $this->render(null, array('user' => $this->user, 'cmarkup' => $cmarkup));
+    $this->render(null, array('user' => $user, 'cmarkup' => $cmarkup));
   }
 
   function do_index() {
@@ -52,13 +38,14 @@ class Users extends BaseController {
   }
 
   function do_edit($id) {
-    $this->requireUser($id, true);
-    $this->render(null, array('user' => $this->user));
+    $user = $this->getEditable('User', $id);
+    
+    $this->render(null, array('user' => $user));
   }
 
   function do_update($id) {
-    $this->requireUser($id, true);
-    $user = $this->user;
+    $user = $this->getEditable('User', $id);
+
     $this->applyForm($user);
     if ($user->save()) {
       redirect(url_to($user, 'show'));

@@ -2,35 +2,22 @@
 require_once('basecontroller.php');
 
 class Comments extends BaseController {
-
-  function requireComment($id, $editable = true) {
-    $this->comment = null;
-
-    $cu = $this->currentUser;
-    $comment = new Comment();
-    $comment->where('id', $id)->get();
-
-    if (!$editable) {
-      $this->comment = $comment;
-    } else {
-      $comment->user->get();
-      if ($cu && ($cu->is_admin || $cu->id == $comment->user->id)) {
-        $this->comment = $comment;
-      }
-    }
-
-    if (!$this->comment) {
-      $this->show_error('Entry not found');
-    }
+  function do_show($id) {
+    $comment = $this->get('Comment', $id);
+    $this->render(null, array('comment' => $comment));
   }
 
   function do_delete($id) {
     if (isPost()) {
-      $this->requireComment($id);
-      $this->comment->entry->get();
-      $this->comment->delete();
+      $comment = $this->get('Comment', $id);
+      if ($comment && $comment->canEdit($this->currentUser)) {
+        $comment->entry->get();
+        $comment->delete();
+      } else {
+        $this->show_error('Permission denied');
+      }
 
-      redirect_back(url_to($this->comment->entry, 'show'));
+      redirect_back(url_to($comment->entry, 'show'));
     }
   }
 }

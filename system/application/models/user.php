@@ -51,6 +51,14 @@ class User extends BaseModel {
     parent::__set($k, $v);
   }
 
+  function canEdit($user) {
+    if (parent::canEdit($user)) return true;
+    if ($user) {
+     if ($this->id == $user->id) return true;
+    }
+    return false;
+  }
+
   function isPassword($passwd) {
     return self::hashPassword($passwd, $this->salt) == $this->salted_passwd;
   }

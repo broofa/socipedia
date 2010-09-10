@@ -41,6 +41,21 @@ abstract class BaseController extends Controller {
     $this->template->render();
   }
 
+  function get($modelClass, $id) {
+    $model = modelFind($modelClass, 'id', $id);
+    if (!$model) $this->show_error("$modelClass not found");
+    return $model;
+  }
+
+  function getEditable($modelClass, $id, $user = null) {
+    if (!$user) $user = $this->currentUser;
+    $model = $this->get($modelClass, $id);
+    if (!$model->canEdit($user)) {
+      $this->show_error('Permission denied', 401);
+    }
+    return $model;
+  }
+
   function show_error($msg, $code=404) {
     show_error($msg, $code);
     die();

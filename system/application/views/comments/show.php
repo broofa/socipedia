@@ -29,7 +29,6 @@ function deleteComment(id) {
 }
 </script>
 <?
-foreach ($comments as $comment) {
     $comment->user->get();
     $comment->entry->get();
   ?>
@@ -42,11 +41,10 @@ foreach ($comments as $comment) {
         <? if ($comment->action) { ?>
           <span class="action <?= $comment->action ?>">(<?= $comment->action ?> request)</span>
         <? } ?>
-        <? if (isset($edit_ui) && $edit_ui) { ?>
+        <? if (isset($edit_ui)) { ?>
         <a class="delete_button" class="button" href="#" onclick="deleteComment(<?= $comment->id ?>)">delete</a>
         <? } ?>
       </div>
       <div class="body"><?= linkify(htmlify($comment->body)) ?></div>
     </li>
-  <? } ?>
 </ul>

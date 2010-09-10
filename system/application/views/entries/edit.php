@@ -137,7 +137,7 @@ label IMG {
   <div class="label">Description</div>
   <textarea id="description" name="description" rows="16"><?= $entry->description ?></textarea>
   <div class="hint">(<span id="description_left">1000</span> characters left)</div>
-  <div class="hint">Hint: Add <a href="http://help.twitter.com/entries/49309-what-are-hashtags-symbols">#hashtags</a> to have your affiliations and areas of expertise listed on the <?= anchor('/entries/tags', 'Tags page') ?>. E.g. "We partner with <strong>#techalliance</strong> members to build <strong>#java</strong> solutions for the <strong>#biotech</strong> industry."</div>
+  <div class="hint">Hint: Add <a href="http://help.twitter.com/entries/49309-what-are-hashtags-symbols">#hashtags</a> to have your affiliations and areas of expertise listed on the <?= link_to('entries', 'tags', 'Tags page') ?>. E.g. "We partner with <strong>#techalliance</strong> members to build <strong>#java</strong> solutions for the <strong>#biotech</strong> industry."</div>
 
   <?= cleer() ?>
 

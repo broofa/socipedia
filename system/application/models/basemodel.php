@@ -4,26 +4,15 @@ abstract class BaseModel extends DataMapper {
     parent::__construct();
   }
 
-  function logName() {
-    return $this->id;
-  }
-
   function logActivity($action, $body=null) {
-    $cn = get_class($this);
-    $name = $this->logName;
-
-    $activity = new Activity();
-    $activity->summary = "$action $cn \"$name\"";
-    $activity->body = $body;
+    $activity = new Activity($this);
+    $name = $this->logName();
+    $activity->body = "$action $activity->target_class $activity->target_id".($name ? ", \"$name\"" : "");
     $activity->save();
   }
 
-  function delete($log = true) {
-    if ($log) {
-      $this->logActivity('deleted');
-    }
-
-    parent::delete();
+  function logName() {
+    return isset($this->name) ? $this->name : "";
   }
 
   function __get($k) {
@@ -38,17 +27,20 @@ abstract class BaseModel extends DataMapper {
     $this->$k = $v;
   }
 
-  /*
-  function save($object='', $log = true) {
-    $action = $this->id ? 'updated' : 'inserted';
-
-    $args = func_get_args();
-    call_user_func_array(array('parent', 'save'), $args);
-
-    if ($log) {
-      $this->logActivity($action);
-    }
+  function canEdit($user) {
+    return $user && $user->is_admin;
   }
-     */
+
+  function delete($o=null, $log=true) {
+    if ($log) $this->logActivity('deleted');
+    parent::delete();
+  }
+
+  function save($o=null, $log=true) {
+    $action = $this->id ? 'updated' : 'inserted';
+    parent::save($o);
+    if ($log) $this->logActivity($action);
+  }
+
 }
 ?>

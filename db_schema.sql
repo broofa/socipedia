@@ -20,21 +20,26 @@
 --
 
 DROP TABLE IF EXISTS `pp_activities`;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
 CREATE TABLE `pp_activities` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `entry_id` int(10) NOT NULL,
-  `summary` varchar(128) NOT NULL,
-  `details` varchar(4096) NOT NULL,
-  `updated` datetime NOT NULL,
+  `target_class` varchar(20) NOT NULL,
+  `target_id` int(10) NOT NULL,
+  `body` varchar(256) NOT NULL,
+  `created` datetime NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `updated` (`updated`)
-) ENGINE=MyISAM AUTO_INCREMENT=354 DEFAULT CHARSET=latin1;
+  KEY `updated` (`created`)
+) ENGINE=MyISAM AUTO_INCREMENT=424 DEFAULT CHARSET=latin1;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `pp_comments`
 --
 
 DROP TABLE IF EXISTS `pp_comments`;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
 CREATE TABLE `pp_comments` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `email` varchar(100) NOT NULL,
@@ -43,13 +48,16 @@ CREATE TABLE `pp_comments` (
   `action` char(10) NOT NULL,
   `body` varchar(1024) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=36 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=53 DEFAULT CHARSET=latin1;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `pp_comments_entries`
 --
 
 DROP TABLE IF EXISTS `pp_comments_entries`;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
 CREATE TABLE `pp_comments_entries` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `comment_id` int(10) unsigned NOT NULL,
@@ -57,13 +65,16 @@ CREATE TABLE `pp_comments_entries` (
   PRIMARY KEY (`id`),
   KEY `comments_id` (`comment_id`,`entry_id`),
   KEY `entry_id` (`entry_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=30 DEFAULT CHARSET=latin1;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `pp_comments_users`
 --
 
 DROP TABLE IF EXISTS `pp_comments_users`;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
 CREATE TABLE `pp_comments_users` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `comment_id` int(10) unsigned NOT NULL,
@@ -71,13 +82,16 @@ CREATE TABLE `pp_comments_users` (
   PRIMARY KEY (`id`),
   KEY `comment_id` (`comment_id`,`user_id`),
   KEY `user_id` (`user_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=22 DEFAULT CHARSET=latin1;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `pp_entries`
 --
 
 DROP TABLE IF EXISTS `pp_entries`;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
 CREATE TABLE `pp_entries` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `created` datetime NOT NULL,
@@ -93,13 +107,16 @@ CREATE TABLE `pp_entries` (
   `geocode` varchar(100) NOT NULL COMMENT 'lon,lat',
   `description` varchar(1024) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=362 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=377 DEFAULT CHARSET=latin1;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `pp_entries_users`
 --
 
 DROP TABLE IF EXISTS `pp_entries_users`;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
 CREATE TABLE `pp_entries_users` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` int(11) unsigned NOT NULL,
@@ -107,13 +124,16 @@ CREATE TABLE `pp_entries_users` (
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `entry_id` (`entry_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=22 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=37 DEFAULT CHARSET=latin1;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `pp_users`
 --
 
 DROP TABLE IF EXISTS `pp_users`;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
 CREATE TABLE `pp_users` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `created` datetime NOT NULL,
@@ -124,16 +144,6 @@ CREATE TABLE `pp_users` (
   `is_admin` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
+SET character_set_client = @saved_cs_client;
 
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2010-06-30 14:25:01

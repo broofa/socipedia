@@ -1,7 +1,7 @@
 <?
 include "app_config.php";
 
-define('TAG_REGEX', '/(?:\s#)([a-zA-Z][\w-]*)/');
+define('TAG_REGEX', '/(#[a-zA-Z][\w-]*)/');
 
 function dump($o) {
   echo "<h3>dump</h3>\n<pre>\n";
@@ -48,6 +48,7 @@ function url_to($model='', $action=null, $params = null) {
     if (!$action) $action = 'show';
     $path = "$class/$action/$model->id";
   } else if ($model) {
+    $model = strtolower(plural($model));
     $path = $action ? "$model/$action" : "$model";
   } else {
     $path = "/";
@@ -73,7 +74,7 @@ function queryParams() {
 
 function param($name, $default='', $trim=true) {
   $p = queryParams();
-  if (!isset($p->$name)) {
+  if (!isset($p[$name])) {
     if (isPost()) {
       $p = $_POST;
     } else {
@@ -94,15 +95,16 @@ function cleer() {
 }
 
 function hashquery($s) {
-  return $s ? preg_replace('/^#/', 'tag:', $s) : null;
+  return $s ? preg_replace('/#/', 'tag:', $s) : null;
 }
 function hashunquery($s) {
-  return $s ? preg_replace('/^tag:/', '#', $s) : null;
+  return $s ? preg_replace('/tag:/', '#', $s) : null;
 }
 
 function _hashlinks($matches) {
-  $s=$matches[0];
-  return "<a class=\"hashtag\" href=\"./?q=".hashquery($s)."\">".$s."</a>";
+  return "<a class=\"hashtag\" href=\"".
+         url_to('entries', 'index', 'q='.hashquery($matches[1])).
+         "\">".$matches[0]."</a>";
 }
 
 function hashlinks($s) {

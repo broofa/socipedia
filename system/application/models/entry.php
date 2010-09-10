@@ -76,13 +76,23 @@ class Entry extends BaseModel {
     }
   }
 
-  function delete() {
-    $activity = new Activity($this->id);
-    $name = $this->name;
-    $activity->summary = "Deleted \"$name\"";
-    $activity->save();
+  function canEdit($user) {
+    if (parent::canEdit($user)) return true;
+    if ($user) {
+      $this->user->get();
+      if ($this->user) {
+        if ($this->user->id == $user->id) return true;
+      }
+    }
+    return false;
+  }
 
-    parent::delete();
+  function delete($o=null, $log=true) {
+    // Remove all entry comments
+    $this->comment->get();
+    $this->comment->delete_all();
+
+    parent::delete($o, $log);
   }
 
   function url($type=null, $option='') {
@@ -105,16 +115,6 @@ class Entry extends BaseModel {
     case 'delete':
       return $type ? $this->url()."/$type/".$this->id : site_url('/entries');
     }
-  }
-
-  public function canEdit($user=null) {
-    if ($user) {
-      if ($user->is_admin) return true;
-
-      $this->user->get();
-      if ($this->user && $this->user->id == $user->id) return true;
-    }
-    return false;
   }
 
   public function imageURL() {
